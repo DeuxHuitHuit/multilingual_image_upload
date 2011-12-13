@@ -6,7 +6,7 @@ The multilingual version of the specialized field for image uploads.
 * Version: 0.1beta
 * Build Date: 2011-12-13
 * Authors:
-	- [Xander Group](http://www.xanderadvertising.ro)
+	- [Xander Group](http://www.xanderadvertising.com)
 	- Vlad Ghita
 * Requirements:
 	- Symphony 2.0 or above
