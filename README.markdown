@@ -10,7 +10,8 @@ The multilingual version of the specialized field for image uploads.
 	- Vlad Ghita
 * Requirements:
 	- Symphony 2.0 or above
-	- [Image Upload extension](https://github.com/vlad-ghita/image_upload) at least version 1.1.4.
+	- [Image Upload extension](https://github.com/vlad-ghita/image_upload) at least version 1.1.4
+	- [Frontend Localisation] (https://github.com/vlad-ghita/frontend_localisation)
 	- If using maximum width / height, [JIT](https://github.com/symphonycms/jit_image_manipulation) is required
 
 Thank you all other Symphony & Extensions developers for your inspirational work.
