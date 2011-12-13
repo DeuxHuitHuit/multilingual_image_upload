@@ -28,6 +28,11 @@ The multilingual version of the specialized Image Upload field for images:
 
 **NB:** The resize takes places upon save, no matter new entry or edit entry.
 
+<br />
+**VERY IMPORTANT**<br />
+This extension depends on [Frontend Localisation](https://github.com/vlad-ghita/frontend_localisation). From there it draws it's Frontend language information. This way I'm trying to decouple my multilingual stuff from various Language drivers out there.<br />
+Get Frontend Localisation, a language driver (Language Redirect for example) and you're good to go.
+
 
 
 # 2 Installation #
