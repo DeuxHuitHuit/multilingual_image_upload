@@ -14,8 +14,8 @@
 		public function about() {
 			return array(
 				'name' => MULTILINGUAL_IMAGE_UPLOAD_NAME,
-				'version' => '0.1 beta',
-				'release-date' => '2011-12-13',
+				'version' => '1.0',
+				'release-date' => '2011-12-22',
 				'author' => array(
 					array(
 						'name' => 'Xander Group',
@@ -27,7 +27,7 @@
 						'email' => 'vlad.ghita@xandergroup.ro',
 					),
 				),
-				'description'	=> 'Upload images. Optional unique names, set minimum width / height and maximum width / height.'
+				'description'	=> 'Multilingual upload images. Optional unique names, set minimum width / height and maximum width / height.'
 			);
 		}
 
@@ -106,11 +106,11 @@
 		public function dAddCustomPreferenceFieldsets($context){
 			$group = new XMLElement('fieldset');
 			$group->setAttribute('class', 'settings');
-			$group->appendChild(new XMLElement('legend', __('Multilingual Image Upload')));
+			$group->appendChild(new XMLElement('legend', MULTILINGUAL_IMAGE_UPLOAD_NAME));
 		
 		
 			$label = Widget::Label(__('Consolidate entry data'));
-			$label->appendChild(Widget::Input('settings[multilingual_image_upload][consolidate]', 'yes', 'checkbox', array('checked' => 'checked')));
+			$label->appendChild(Widget::Input('settings['.MULTILINGUAL_IMAGE_UPLOAD_GROUP.'][consolidate]', 'yes', 'checkbox', array('checked' => 'checked')));
 		
 			$group->appendChild($label);
 		
@@ -127,7 +127,7 @@
 		 */
 		public function dSave($context){
 		
-			$new_language_codes = FrontendLanguage::instance()->savedLanguages($context);
+			$new_language_codes = FLang::instance()->ld()->getSavedLanguages($context);
 		
 			$fields = Symphony::Database()->fetch('SELECT `field_id` FROM `tbl_fields_multilingual_image_upload`');
 		
@@ -144,7 +144,7 @@
 							$language_code = substr($column['Field'], strlen($column['Field'])-2);
 		
 							// If not consolidate option AND column language_code not in supported languages codes -> Drop Column
-							if ( ($_POST['settings']['multilingual_image_upload']['consolidate'] !== 'yes') && !in_array($language_code, $new_language_codes)) {
+							if ( ($_POST['settings'][''.MULTILINGUAL_IMAGE_UPLOAD_GROUP.'']['consolidate'] !== 'yes') && !in_array($language_code, $new_language_codes)) {
 								Symphony::Database()->query("ALTER TABLE  `{$entries_table}` DROP COLUMN `file-{$language_code}`");
 								Symphony::Database()->query("ALTER TABLE  `{$entries_table}` DROP COLUMN `size-{$language_code}`");
 								Symphony::Database()->query("ALTER TABLE  `{$entries_table}` DROP COLUMN `mimetype-{$language_code}`");

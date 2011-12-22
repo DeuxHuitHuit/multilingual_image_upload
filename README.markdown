@@ -3,8 +3,8 @@ Field: Multilingual Image upload
 
 The multilingual version of the specialized field for image uploads.
 
-* Version: 0.1beta
-* Build Date: 2011-12-13
+* Version: 1.0
+* Build Date: 2011-12-22
 * Authors:
 	- [Xander Group](http://www.xanderadvertising.com)
 	- Vlad Ghita
@@ -54,11 +54,16 @@ Get Frontend Localisation, a language driver (Language Redirect for example) and
 Field: Image Upload | Field: Multilingual Image Upload
 --------------------|----------------
       [1.1.4](https://github.com/vlad-ghita/image_upload) — *     | [latest](https://github.com/vlad-ghita/multilingual_image_upload)
+  
+Frontend Localisation | Field: Multilingual Image Upload
+----------------------|----------------
+    [0.5 beta](https://github.com/vlad-ghita/frontend_localisation) — *     | [latest](https://github.com/vlad-ghita/multilingual_image_upload)
+
 
 
 
 
 # 4 Changelog #
 
-- 0.1beta : 13 dec 2011
-    * Initial beta release
+- 1.0 : 22 dec 2011
+    * Initial release/
