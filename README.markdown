@@ -3,8 +3,8 @@ Field: Multilingual Image upload
 
 The multilingual version of the specialized field for image uploads.
 
-* Version: 1.0
-* Build Date: 2011-12-22
+* Version: 1.1
+* Build Date: 2011-12-27
 * Authors:
 	- [Xander Group](http://www.xanderadvertising.com)
 	- Vlad Ghita

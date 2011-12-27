@@ -202,7 +202,7 @@
 				$this->_fakeDefaultFile($language_code, $entry_id);
 				
 				$file_result = parent::processRawFieldData($data, $status, $simulate, $entry_id, $language_code);
-			
+				
 				foreach( $file_result as $key => $value ){
 					$result[$key.'-'.$language_code] = $value;
 				}
@@ -287,21 +287,26 @@
 		 * @param array $data
 		 */
 		private function _getData($data){
-			$result = $data;
+			if( is_string($data) ) return $data;
 			
-			if( is_array($data) ){
-				if( !array_key_exists('name', $data) ){
-					$result = array(
-						'name' => $data[0],
-						'type' => $data[1],
-						'tmp_name' => $data[2],
-						'error' => $data[3],
-						'size' => $data[4]
-					);
-				}
+			if( !is_array($data) ) return null;
+			
+			if( array_key_exists('name', $data) ){
+				
+				if( empty($data['name']) ) return null;
+				
+				return $data;
 			}
 			
-			return $result;
+			if( empty($data[0]) ) return null;
+				
+			return array(
+				'name' => $data[0],
+				'type' => $data[1],
+				'tmp_name' => $data[2],
+				'error' => $data[3],
+				'size' => $data[4]
+			);
 		}
 		
 		/**

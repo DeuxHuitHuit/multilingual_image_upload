@@ -14,8 +14,8 @@
 		public function about() {
 			return array(
 				'name' => MULTILINGUAL_IMAGE_UPLOAD_NAME,
-				'version' => '1.0',
-				'release-date' => '2011-12-22',
+				'version' => '1.1',
+				'release-date' => '2011-12-27',
 				'author' => array(
 					array(
 						'name' => 'Xander Group',
