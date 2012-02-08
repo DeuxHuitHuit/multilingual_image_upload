@@ -119,7 +119,7 @@
 		Utilities:
 	-------------------------------------------------------------------------*/
 		
-		public function entryDataCleanup($entry_id, $data){
+		public function entryDataCleanup($entry_id, $data ){
 
 			foreach( FLang::instance()->ld()->languageCodes() as $language_code ){
 				$file_location = WORKSPACE . '/' . ltrim($data['file-'.$language_code], '/');
@@ -129,7 +129,7 @@
 				}
 			}
 
-			parent::entryDataCleanup($entry_id);
+			parent::entryDataCleanup($entry_id, $data);
 
 			return true;
 		}

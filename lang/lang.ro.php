@@ -5,7 +5,7 @@
 		'author' => array(
 			'name' => 'Vlad Ghita',
 			'email' => 'vlad.ghita@xandergroup.ro',
-			'website' => ''
+			'website' => 'www.xanderadvertising.com'
 		),
 		'release-date' => '2012-02-08'
 	);
