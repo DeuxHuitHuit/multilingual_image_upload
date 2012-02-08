@@ -123,7 +123,7 @@
 					$entries_table = 'tbl_entries_data_'.$field["field_id"];
 		
 					try{
-						$show_columns = Symphony::Database()->fetch("SHOW COLUMNS FROM `{$entries_table}` LIKE 'value-%'");
+						$show_columns = Symphony::Database()->fetch("SHOW COLUMNS FROM `{$entries_table}` LIKE 'file-%'");
 					}
 					catch(DatabaseException $dbe){
 						// Field doesn't exist. Better remove it's settings
@@ -133,7 +133,7 @@
 					
 					$columns = array();
 		
-					if ($show_columns) {
+					if( $show_columns ){
 						foreach ($show_columns as $column) {
 							$language_code = substr($column['Field'], strlen($column['Field'])-2);
 		
@@ -150,10 +150,10 @@
 					}
 		
 					// Add new fields
-					foreach ($new_language_codes as $language_code) {
+					foreach( $new_language_codes as $language_code ){
 						// If columna language_code dosen't exist in the laguange drop columns
 		
-						if (!in_array('file-'.$language_code, $columns)) {
+						if( !in_array('file-'.$language_code, $columns) ){
 							Symphony::Database()->query("ALTER TABLE  `{$entries_table}` ADD COLUMN `file-{$language_code}` varchar(255) default NULL");
 							Symphony::Database()->query("ALTER TABLE  `{$entries_table}` ADD COLUMN `size-{$language_code}` int(11) unsigned NULL");
 							Symphony::Database()->query("ALTER TABLE  `{$entries_table}` ADD COLUMN `mimetype-{$language_code}` varchar(50) default NULL");
