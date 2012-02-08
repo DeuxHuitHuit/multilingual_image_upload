@@ -3,8 +3,8 @@ Field: Multilingual Image upload
 
 The multilingual version of the specialized field for image uploads.
 
-* Version: 1.2
-* Build Date: 2012-01-10
+* Version: 1.3
+* Build Date: 2012-02-07
 * Authors:
 	- [Xander Group](http://www.xanderadvertising.com)
 	- Vlad Ghita
@@ -26,6 +26,7 @@ The multilingual version of the specialized Image Upload field for images:
 - optional, set a minimum width and / or height. If 0 or empty, no minimum limit will exist.
 - optional, set a maximum width and / or height. If 0 or empty, no maximum resize limit will exist.
 - optional, it will create unique filenames.
+- optional, it will return value from reference language
 
 **NB:** The resize takes places upon save, if needed, no matter new or edited entry.
 

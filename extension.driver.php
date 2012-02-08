@@ -14,8 +14,8 @@
 		public function about() {
 			return array(
 				'name' => MULTILINGUAL_IMAGE_UPLOAD_NAME,
-				'version' => '1.2',
-				'release-date' => '2012-01-10',
+				'version' => '1.3',
+				'release-date' => '2012-02-07',
 				'author' => array(
 					array(
 						'name' => 'Xander Group',
@@ -27,28 +27,38 @@
 						'email' => 'vlad.ghita@xandergroup.ro',
 					),
 				),
-				'description'	=> 'Multilingual upload images. Optional unique names, set minimum width / height and maximum width / height.'
+				'description'	=> 'Multilingual upload images. Optional unique names, return reference lang value, set minimum width / height and maximum width / height.'
 			);
 		}
-
+		
 		
 		
 		public function install() {
 			return Symphony::Database()->query(
 				"CREATE TABLE `tbl_fields_multilingual_image_upload` (
-				 `id` int(11) unsigned NOT NULL auto_increment,
-				 `field_id` int(11) unsigned NOT NULL,
-				 `destination` varchar(255) NOT NULL,
-				 `validator` varchar(50),
-				 `unique`  varchar(50),
-				 `min_width` int(11) unsigned,
-				 `min_height` int(11) unsigned,
-				 `max_width` int(11) unsigned,
-				 `max_height` int(11) unsigned,
-				  PRIMARY KEY (`id`),
-				  KEY `field_id` (`field_id`)
+					`id` int(11) unsigned NOT NULL auto_increment,
+					`field_id` int(11) unsigned NOT NULL,
+					`destination` varchar(255) NOT NULL,
+					`validator` varchar(50),
+					`unique` enum('yes','no') default 'yes',
+					`def_ref_lang` enum('yes','no') default 'yes',
+					`min_width` int(11) unsigned,
+					`min_height` int(11) unsigned,
+					`max_width` int(11) unsigned,
+					`max_height` int(11) unsigned,
+					PRIMARY KEY (`id`),
+					KEY `field_id` (`field_id`)
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;"
 			);
+		}
+		
+		public function update($previous_version){
+			if( version_compare($previous_version, '1.3', '<') ){
+				Symphony::Database()->query("ALTER TABLE `tbl_fields_multilingual_image_upload` ADD COLUMN `def_ref_lang` ENUM('yes','no') DEFAULT 'yes'");
+				Symphony::Database()->query("UPDATE `tbl_fields_multilingual_image_upload` SET `def_ref_lang` = 'no'");
+			}
+		
+			return true;
 		}
 		
 		public function uninstall() {
@@ -58,12 +68,6 @@
 		
 		public function getSubscribedDelegates(){
 			return array(
-					array(
-							'page' => '/backend/',
-							'delegate' => 'InitaliseAdminPageHead',
-							'callback' => 'dInitaliseAdminPageHead'
-					),
-		
 					array(
 							'page' => '/system/preferences/',
 							'delegate' => 'AddCustomPreferenceFieldsets',
@@ -78,25 +82,7 @@
 			);
 		}
 		
-		/**
-		 * Add necessary assets to content pages head
-		 */
-		public function dInitaliseAdminPageHead() {
-			$callback = Administration::instance()->getPageCallback();
 		
-			if (
-					(
-							($callback['driver'] == 'publish')
-							&& ( $callback['context']['page'] == 'new' || $callback['context']['page'] == 'edit')
-					)
-					|| (
-							strpos('/extension/custompreferences/preferences/', $callback['pageroot']) !== false
-					)
-			) {
-				Administration::instance()->Page->addScriptToHead(URL . '/extensions/' . MULTILINGUAL_IMAGE_UPLOAD_GROUP . '/assets/multilingual_image_upload.content.js', 10251841, false);
-				Administration::instance()->Page->addStylesheetToHead(URL . '/extensions/' . MULTILINGUAL_IMAGE_UPLOAD_GROUP . '/assets/multilingual_image_upload.content.css', "screen");
-			}
-		}
 		
 		/**
 		 * Set options on Preferences page.
@@ -107,8 +93,8 @@
 			$group = new XMLElement('fieldset');
 			$group->setAttribute('class', 'settings');
 			$group->appendChild(new XMLElement('legend', MULTILINGUAL_IMAGE_UPLOAD_NAME));
-		
-		
+			
+			
 			$label = Widget::Label(__('Consolidate entry data'));
 			$label->appendChild(Widget::Input('settings['.MULTILINGUAL_IMAGE_UPLOAD_GROUP.'][consolidate]', 'yes', 'checkbox', array('checked' => 'checked')));
 		
@@ -136,7 +122,15 @@
 				foreach ($fields as $field) {
 					$entries_table = 'tbl_entries_data_'.$field["field_id"];
 		
-					$show_columns = Symphony::Database()->fetch("SHOW COLUMNS FROM `{$entries_table}` LIKE 'file-%'");
+					try{
+						$show_columns = Symphony::Database()->fetch("SHOW COLUMNS FROM `{$entries_table}` LIKE 'value-%'");
+					}
+					catch(DatabaseException $dbe){
+						// Field doesn't exist. Better remove it's settings
+						Symphony::Database()->query("DELETE FROM `tbl_fields_multilingual_image_upload` WHERE `field_id` = ".$field["field_id"].";");
+						continue;
+					}
+					
 					$columns = array();
 		
 					if ($show_columns) {
