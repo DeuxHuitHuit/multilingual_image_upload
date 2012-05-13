@@ -1,27 +1,30 @@
 <?php
 
-	if (!defined('__IN_SYMPHONY__')) die('<h2>Symphony Error</h2><p>You cannot directly access this file</p>');
-	
-	require_once(EXTENSIONS . '/image_upload/fields/field.image_upload.php');
-	require_once(EXTENSIONS . '/frontend_localisation/lib/class.FLang.php');
-	
-	
-	
+	if( !defined('__IN_SYMPHONY__') ) die('<h2>Symphony Error</h2><p>You cannot directly access this file</p>');
+
+
+
+	require_once(EXTENSIONS.'/image_upload/fields/field.image_upload.php');
+	require_once(EXTENSIONS.'/frontend_localisation/lib/class.FLang.php');
+
+
+
 	final class fieldMultilingual_image_upload extends fieldImage_upload
 	{
-		
-		public function __construct(&$parent){
-			parent::__construct($parent);
-			
+
+		/*------------------------------------------------------------------------------------------------*/
+		/*  Definition  */
+		/*------------------------------------------------------------------------------------------------*/
+
+		protected $_driver;
+
+		public function __construct(){
+			parent::__construct();
+
 			$this->_name = __('Multilingual Image Upload');
+			$this->_driver = Symphony::ExtensionManager()->create('multilingual_image_upload');
 		}
-		
-		
-		
-	/*-------------------------------------------------------------------------
-		 Setup:
-	-------------------------------------------------------------------------*/
-		
+
 		public function createTable(){
 			$query = "CREATE TABLE IF NOT EXISTS `tbl_entries_data_{$this->get('id')}` (
 				`id` int(11) unsigned NOT NULL auto_increment,
@@ -30,75 +33,69 @@
 				`size` int(11) unsigned NULL,
 				`mimetype` varchar(50) default NULL,
 				`meta` varchar(255) default NULL,";
-		
-			foreach( FLang::instance()->ld()->languageCodes() as $language_code ){
-				$query .= "`file-{$language_code}` varchar(255) default NULL,
-					`size-{$language_code}` int(11) unsigned NULL,
-					`mimetype-{$language_code}` varchar(50) default NULL,
-					`meta-{$language_code}` varchar(255) default NULL,";
+
+			foreach( FLang::instance()->getLangs() as $lc ){
+				$query .= "`file-{$lc}` varchar(255) default NULL,
+					`size-{$lc}` int(11) unsigned NULL,
+					`mimetype-{$lc}` varchar(50) default NULL,
+					`meta-{$lc}` varchar(255) default NULL,";
 			}
-			
+
 			$query .= "PRIMARY KEY (`id`),
 				UNIQUE KEY `entry_id` (`entry_id`)
-				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;";
-			
+				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
+
 			return Symphony::Database()->query($query);
 		}
-		
-		
-		
-		/*-------------------------------------------------------------------------
-		 Settings:
-		-------------------------------------------------------------------------*/
-		
+
+
+
+		/*------------------------------------------------------------------------------------------------*/
+		/*  Settings  */
+		/*------------------------------------------------------------------------------------------------*/
+
 		public function findDefaults(&$settings){
 			if( $settings['def_ref_lang'] != 'yes' ){
 				$settings['def_ref_lang'] = 'no';
 			}
-			
+
 			return parent::findDefaults($settings);
 		}
-		
-		public function displaySettingsPanel(XMLElement &$wrapper, $errors = null) {
+
+		public function displaySettingsPanel(XMLElement &$wrapper, $errors = null){
 			parent::displaySettingsPanel($wrapper, $errors);
-			
-			// append Default Value
-			foreach( $wrapper->getChildrenByName('div') as $div ){
-				/* @var $div XMLElement */
-				
-				if( $div->getAttribute('class') == 'compact' ){
-		
-					$div->appendChild(
-						$this->_appendDefLangValCheckbox()
-					);
-					
-					break;
-				}
-			}
+
+			$pos = $wrapper->getNumberOfChildren() - 1;
+
+			$div = new XMLElement('div', null, array('class' => 'two columns'));
+
+			$unique = $wrapper->getChild($pos);
+			$unique->setAttribute('class', $unique->getAttribute('class').' column');
+
+			$div->appendChild($unique);
+			$this->_appendDefLangValCheckbox($div);
+
+			$wrapper->replaceChildAt($pos, $div);
 		}
-		
-		private function _appendDefLangValCheckbox() {
-			$order = $this->get('sortorder');
-		
-			$label = Widget::Label();
-			$input = Widget::Input("fields[{$order}][def_ref_lang]", 'yes', 'checkbox');
-		
-			if ($this->get('def_ref_lang') == 'yes') $input->setAttribute('checked', 'checked');
-		
-			$label->setValue(__('%s Use value from reference language if selected language has empty value.', array($input->generate())));
-		
-			return $label;
+
+		private function _appendDefLangValCheckbox(XMLElement &$wrapper){
+			$label = Widget::Label(null, null, 'column');
+			$input = Widget::Input("fields[{$this->get('sortorder')}][def_ref_lang]", 'yes', 'checkbox');
+			if( $this->get('def_ref_lang') == 'yes' ) $input->setAttribute('checked', 'checked');
+			$label->setValue(__('%s Use value from main language if selected language has empty value.', array($input->generate())));
+
+			$wrapper->appendChild($label);
 		}
-		
+
 		public function commit(){
 			if( !Field::commit() ) return false;
-		
+
 			$id = $this->get('id');
-		
-			if($id === false) return false;
-		
+
+			if( $id === false ) return false;
+
 			$settings = array();
-			
+
 			$settings['field_id'] = $id;
 			$settings['destination'] = $this->get('destination');
 			$settings['validator'] = ($settings['validator'] == 'custom' ? NULL : $this->get('validator'));
@@ -108,22 +105,225 @@
 			$settings['min_height'] = $this->get('min_height');
 			$settings['max_width'] = $this->get('max_width');
 			$settings['max_height'] = $this->get('max_height');
-		
-			Symphony::Database()->query("DELETE FROM `tbl_fields_".$this->handle()."` WHERE `field_id` = '$id' LIMIT 1");
-			return Symphony::Database()->insert($settings, 'tbl_fields_' . $this->handle());
-		}
-		
-		
-		
-	/*-------------------------------------------------------------------------
-		Utilities:
-	-------------------------------------------------------------------------*/
-		
-		public function entryDataCleanup($entry_id, $data ){
 
-			foreach( FLang::instance()->ld()->languageCodes() as $language_code ){
-				$file_location = WORKSPACE . '/' . ltrim($data['file-'.$language_code], '/');
-					
+			Symphony::Database()->query("DELETE FROM `tbl_fields_".$this->handle()."` WHERE `field_id` = '$id' LIMIT 1");
+			return Symphony::Database()->insert($settings, 'tbl_fields_'.$this->handle());
+		}
+
+
+
+		/*------------------------------------------------------------------------------------------------*/
+		/*  Input  */
+		/*------------------------------------------------------------------------------------------------*/
+
+		public function displayPublishPanel(XMLElement &$wrapper, $data = NULL, $flagWithError = NULL, $fieldnamePrefix = NULL, $fieldnamePostfix = NULL){
+			$this->_driver->appendAssets();
+
+			$wrapper->setAttribute('class', $wrapper->getAttribute('class').' field-multilingual_image_upload field-multilingual');
+
+			$container = new XMLElement('div', null, array('class' => 'container'));
+
+
+			/* Label */
+
+			$label = Widget::Label($this->get('label'));
+			$class = 'file';
+			$label->setAttribute('class', $class);
+			if( $this->get('required') != 'yes' ) $label->appendChild(new XMLElement('i', __('Optional')));
+
+			$container->appendChild($label);
+
+
+			$main_lang = FLang::instance()->getMainLang();
+			$all_langs = FLang::instance()->getAllLangs();
+			$langs = FLang::instance()->getLangs();
+
+
+			/* Tabs */
+
+			$ul = new XMLElement('ul', null, array('class' => 'tabs'));
+
+			foreach( $langs as $lc ){
+				$li = new XMLElement(
+					'li',
+					($all_langs[$lc] ? $all_langs[$lc] : __('Unknown language')),
+					array('class' => $lc.($lc == $main_lang ? ' active' : ''))
+				);
+
+				$lc === $main_lang ? $ul->prependChild($li) : $ul->appendChild($li);
+			}
+
+			$container->appendChild($ul);
+
+
+			/* Inputs */
+
+			foreach( $langs as $lc ){
+				$div = new XMLElement('div', null, array('class' => 'file tab-panel tab-'.$lc));
+
+				$file = 'file-'.$lc;
+
+				if( $data[$file] ){
+					$div->appendChild(
+						Widget::Anchor('/workspace'.$data[$file], URL.'/workspace'.$data[$file])
+					);
+				}
+
+				$div->appendChild(
+					Widget::Input(
+						'fields'.$fieldnamePrefix.'['.$this->get('element_name').']['.$lc.']'.$fieldnamePostfix,
+						$data[$file],
+						$data[$file] ? 'hidden' : 'file'
+					)
+				);
+
+				$container->appendChild($div);
+			}
+
+
+			/* Directory check */
+
+			if( !is_dir(DOCROOT.$this->get('destination').'/') ){
+				$flagWithError = __('The destination directory, <code>%s</code>, does not exist.', array($this->get('destination')));
+			}
+			elseif( !$flagWithError && !is_writable(DOCROOT.$this->get('destination').'/') ){
+				$flagWithError = __('Destination folder, <code>%s</code>, is not writable. Please check permissions.', array($this->get('destination')));
+			}
+
+			if( $flagWithError != NULL ){
+				$wrapper->appendChild(Widget::Error($container, $flagWithError));
+			}
+			else{
+				$wrapper->appendChild($container);
+			}
+		}
+
+		public function checkPostFieldData($data, &$message, $entry_id = NULL){
+			$error = self::__OK__;
+			$field_data = $data;
+
+			foreach( FLang::instance()->getLangs() as $lc ){
+
+				$file_message = '';
+				$data = $this->_getData($field_data[$lc]);
+
+				if( is_array($data) && isset($data['name']) ){
+					$data['name'] = $this->getUniqueFilename($data['name'], $lc, true);
+				}
+
+				$status = parent::checkPostFieldData($data, $file_message, $entry_id);
+
+				// if one language fails, all fail
+				if( $status != self::__OK__ ){
+					$message .= "<br />{$lc}: {$file_message}";
+					$error = self::__ERROR__;
+				}
+			}
+
+			return $error;
+		}
+
+		public function processRawFieldData($data, &$status, &$message, $simulate = false, $entry_id = NULL){
+			if( !is_array($data) || empty($data) ) return parent::processRawFieldData($data, $status, $message, $simulate, $entry_id);
+
+			$result = array();
+			$field_data = $data;
+
+			foreach( FLang::instance()->getLangs() as $lc ){
+
+				$data = $this->_getData($field_data[$lc]);
+
+				if( is_array($data) && isset($data['name']) ){
+					$data['name'] = $this->getUniqueFilename($data['name'], $lc, true);
+				}
+
+				$this->_fakeDefaultFile($lc, $entry_id);
+
+				$file_result = parent::processRawFieldData($data, $status, $message, $simulate, $entry_id, $lc);
+
+				if( is_array($file_result) ){
+					foreach( $file_result as $key => $value ){
+						$result[$key.'-'.$lc] = $value;
+					}
+				}
+			}
+
+			return $result;
+		}
+
+
+
+		/*------------------------------------------------------------------------------------------------*/
+		/*  Output  */
+		/*------------------------------------------------------------------------------------------------*/
+
+		public function appendFormattedElement(XMLElement &$wrapper, $data){
+			$lang_code = FLang::instance()->getLangCode();
+
+			// If value is empty for this language, load value from reference language
+			if( $this->get('def_ref_lang') == 'yes' && $data['file-'.$lang_code] == '' ){
+				$lang_code = FLang::instance()->getMainLang();
+			}
+
+			$data['file'] = $data['file-'.$lang_code];
+			$data['meta'] = $data['meta-'.$lang_code];
+			$data['mimetype'] = $data['mimetype-'.$lang_code];
+
+			parent::appendFormattedElement($wrapper, $data);
+		}
+
+		public function prepareTableValue($data, XMLElement $link = null, $entry_id = null){
+			// default to backend language
+			$lang_code = Lang::get();
+
+			if( !FLang::instance()->validateLangCode($lang_code) // language not supported
+				|| ($this->get('def_ref_lang') === 'yes' && $data['file-'.$lang_code] === '') // or value is empty for this language
+			){
+				$lang_code = FLang::instance()->getMainLang();
+			}
+
+			$data['file'] = $data['file-'.$lang_code];
+
+			return parent::prepareTableValue($data, $link, $entry_id);
+		}
+
+		public function getParameterPoolValue($data){
+			$lang_code = FLang::instance()->getLangCode();
+
+			// If value is empty for this language, load value from main language
+			if( $this->get('def_ref_lang') === 'yes' && $data['file-'.$lang_code] === '' ){
+				$lang_code = FLang::instance()->getMainLang();
+			}
+
+			return $data['file-'.$lang_code];
+		}
+
+		public function getExampleFormMarkup(){
+			$label = Widget::Label($this->get('label').'
+					<!-- '.__('Modify just current language value').' -->
+					<input name="fields['.$this->get('element_name').'][value-{$url-language}]" type="text" />
+		
+					<!-- '.__('Modify all values').' -->');
+
+			foreach( FLang::instance()->getLangs() as $lc ){
+				$fieldname = 'fields['.$this->get('element_name').'][value-'.$lc.']';
+				$label->appendChild(Widget::Input($fieldname));
+			}
+
+			return $label;
+		}
+
+
+
+		/*------------------------------------------------------------------------------------------------*/
+		/*  Utilities  */
+		/*------------------------------------------------------------------------------------------------*/
+
+		public function entryDataCleanup($entry_id, $data){
+
+			foreach( FLang::instance()->getLangs() as $lc ){
+				$file_location = WORKSPACE.'/'.ltrim($data['file-'.$lc], '/');
+
 				if( is_file($file_location) ){
 					General::deleteFile($file_location);
 				}
@@ -133,261 +333,31 @@
 
 			return true;
 		}
-		
-		
-		
-	/*-------------------------------------------------------------------------
-		Publish:
-	-------------------------------------------------------------------------*/
 
-		public function displayPublishPanel(XMLElement &$wrapper, $data=NULL, $flagWithError=NULL, $fieldnamePrefix=NULL, $fieldnamePostfix=NULL){
-			$callback = Administration::instance()->getPageCallback();
-			
-			if(
-					// if not Standard Section
-					($callback['context']['page'] != 'edit' && $callback['context']['page'] != 'new')
-					// and not Custom Preferences
-					&& ($callback['pageroot'] != '/extension/custompreferences/preferences/' && $callback['driver'] != 'preferences' )
-			) {
-				return;
-			}
-			
-			// append Assets
-			Administration::instance()->Page->addScriptToHead(URL . '/extensions/multilingual_image_upload/assets/multilingual_image_upload.content.js', 10251841, false);
-			Administration::instance()->Page->addStylesheetToHead(URL . '/extensions/multilingual_image_upload/assets/multilingual_image_upload.content.css', "screen");
-			
-			
-			$wrapper->setAttribute('class', $wrapper->getAttribute('class').' field-multilingual_image_upload field-multilingual');
-		
-			$container = new XMLElement('div', null, array('class' => 'container'));
-		
-		
-			/* Label */
-		
-			$label = Widget::Label($this->get('label'));
-			$class = 'file';
-			$label->setAttribute('class', $class);
-			if($this->get('required') != 'yes') $label->appendChild(new XMLElement('i', __('Optional')));
-		
-			$container->appendChild($label);
-		
-		
-			$reference_language = FLang::instance()->referenceLanguage();
-			$all_languages = FLang::instance()->ld()->allLanguages();
-			$language_codes = FLang::instance()->ld()->languageCodes();
-		
-		
-			/* Tabs */
-		
-			$ul = new XMLElement('ul');
-			$ul->setAttribute('class', 'tabs');
-		
-			foreach( $language_codes as $language_code ){
-				$class = $language_code . ($language_code == $reference_language ? ' active' : '');
-				$li = new XMLElement('li',($all_languages[$language_code] ? $all_languages[$language_code] : __('Unknown language')));
-				$li->setAttribute('class', $class);
-		
-				// to use this, Multilingual Text must depend on Frontend Localisation so UX is consistent regarding Language Tabs
-				//				if( $language_code == $reference_language ){
-				//					$ul->prependChild($li);
-				//				}
-				//				else{
-				$ul->appendChild($li);
-				//				}
-			}
-		
-			$container->appendChild($ul);
-		
-		
-			/* Inputs */
-		
-			foreach( $language_codes as $language_code ){
-				$div = new XMLElement('div', NULL, array('class' => 'file tab-panel tab-'.$language_code));
-		
-				$file = 'file-'.$language_code;
-		
-				if( $data[$file] ){
-					$div->appendChild(
-							Widget::Anchor(
-									'/workspace' . $data[$file],
-									URL . '/workspace' . $data[$file]
-							)
-					);
-				}
-		
-				$div->appendChild(
-						Widget::Input(
-								'fields'.$fieldnamePrefix.'['.$this->get('element_name').']['.$language_code.']'.$fieldnamePostfix,
-								$data[$file],
-								($data[$file] ? 'hidden' : 'file')
-						)
-				);
-		
-				$container->appendChild($div);
-			}
-		
-		
-			/* Directory check */
-		
-			if(!is_dir(DOCROOT . $this->get('destination') . '/')){
-				$flagWithError = __('The destination directory, <code>%s</code>, does not exist.', array($this->get('destination')));
-			}
-			elseif(!$flagWithError && !is_writable(DOCROOT . $this->get('destination') . '/')){
-				$flagWithError = __('Destination folder, <code>%s</code>, is not writable. Please check permissions.', array($this->get('destination')));
-			}
-		
-			if($flagWithError != NULL){
-				$wrapper->appendChild(Widget::wrapFormElementWithError($container, $flagWithError));
-			}
-			else{
-				$wrapper->appendChild($container);
-			}
-		}
-		
-		public function checkPostFieldData($data, &$message, $entry_id = NULL) {
-			$error = self::__OK__;
-			$field_data = $data;
-			
-			foreach( FLang::instance()->ld()->languageCodes() as $language_code ){
-			
-				$file_message = '';
-				$data = $this->_getData($field_data[$language_code]);
-				
-				if( is_array($data) && isset($data['name']) ){
-					$data['name'] = $this->getUniqueFilename($data['name'], $language_code, true);
-				}
-				
-				$status = parent::checkPostFieldData($data, $file_message, $entry_id);
-				
-				// if one language fails, all fail
-				if( $status != self::__OK__ ){
-					$message .= "<br />{$language_code}: {$file_message}";
-					$error = self::__ERROR__;
-				}
-			}
-			
-			return $error;
-		}
-		
-		public function processRawFieldData($data, &$status, $simulate = false, $entry_id = NULL) {
-			if( !is_array($data) || empty($data) ) return parent::processRawFieldData($data, $status, $simulate, $entry_id, $language_code);
-			
-			$result = array();
-			$field_data = $data;
-			
-			foreach( FLang::instance()->ld()->languageCodes() as $language_code ){
-				
-				$data = $this->_getData($field_data[$language_code]);
-			
-				if( is_array($data) && isset($data['name']) ){
-					$data['name'] = $this->getUniqueFilename($data['name'], $language_code, true);
-				}
-			
-				$this->_fakeDefaultFile($language_code, $entry_id);
-				
-				$file_result = parent::processRawFieldData($data, $status, $simulate, $entry_id, $language_code);
-				
-				if( is_array($file_result) ){
-					foreach( $file_result as $key => $value ){
-						$result[$key.'-'.$language_code] = $value;
-					}
-				}
-			}
-			
-			return $result;
-		}
-		
-		
-		
-	/*-------------------------------------------------------------------------
-		Output:
-	-------------------------------------------------------------------------*/
-		
-		public function appendFormattedElement(XMLElement &$wrapper, $data){
-			$language_code = FLang::instance()->ld()->languageCode();
-			
-			// If value is empty for this language, load value from reference language
-			if( $this->get('def_ref_lang') == 'yes' && $data['file-'.$language_code] == '' ){
-				$language_code = FLang::instance()->referenceLanguage();
-			}
-			
-			$data['file'] = $data['file-'.$language_code];
-			$data['meta'] = $data['meta-'.$language_code];
-			$data['mimetype'] = $data['mimetype-'.$language_code];
-			
-			parent::appendFormattedElement($wrapper, $data);
-		}
-		
-		public function prepareTableValue($data, XMLElement $link=null, $entry_id = null){
-			// default to backend language
-			$language_code = Lang::get();
-			
-			if(
-				// language not supported
-				!in_array($language_code, FLang::instance()->ld()->languageCodes())
-				// or value is empty for this language
-				|| ( $this->get('def_ref_lang') == 'yes' && $data['file-'.$language_code] == '' )
-			){
-				$language_code = FLang::instance()->referenceLanguage();
-			}
-		
-			$data['file'] = $data['file-'.$language_code];
-		
-			return parent::prepareTableValue($data, $link, $entry_id);
-		}
-		
-		public function getParameterPoolValue($data) {
-			$language_code = FLang::instance()->ld()->languageCode();
-			
-			// If value is empty for this language, load value from reference language
-			if( $this->get('def_ref_lang') == 'yes' && $data['file-'.$language_code] == '' ){
-				$language_code = FLang::instance()->referenceLanguage();
-			}
-			
-			return $data['file-'.$language_code];
-		}
-		
-		public function getExampleFormMarkup(){
-			$fieldname = 'fields['.$this->get('element_name').'][value-{$url-language}]';
-		
-			$label = Widget::Label($this->get('label').'
-					<!-- '.__('Modify just current language value').' -->
-					<input name="fields['.$this->get('element_name').'][value-{$url-language}]" type="text" />
-		
-					<!-- '.__('Modify all values').' -->');
-		
-			foreach( FLang::instance()->ld()->languageCodes() as $language_code ){
-				$fieldname = 'fields['.$this->get('element_name').'][value-'.$language_code.']';
-				$label->appendChild(Widget::Input($fieldname));
-			}
-		
-			return $label;
-		}
-		
 
-		
-	/*-------------------------------------------------------------------------
-		In-house utilities:
-	-------------------------------------------------------------------------*/
-		
-		protected function getUniqueFilename($filename, $language_code = null, $enable = false) {
+
+		/*------------------------------------------------------------------------------------------------*/
+		/*  In-house  */
+		/*------------------------------------------------------------------------------------------------*/
+
+		protected function getUniqueFilename($filename, $lang_code = null, $enable = false){
 			if( $enable ){
-				if( empty($language_code) || !is_string($language_code) ){
-					$language_code = FLang::instance()->referenceLanguage();
+				if( empty($lang_code) || !is_string($lang_code) ){
+					$lang_code = FLang::instance()->getMainLang();
 				}
-				
-				$crop  = '150';
-				$replace = $language_code;
-				
+
+				$crop = '150';
+				$replace = $lang_code;
+
 				if( $this->get('unique') == 'yes' ) $replace .= ".'-'.time()";
-				
+
 				return preg_replace("/(.*)(\.[^\.]+)/e", "substr('$1', 0, $crop).'-'.$replace.'$2'", $filename);
 			}
-			
+
 			return $filename;
 		}
-		
-		
+
+
 		/**
 		 * It is possible that data from Symphony won't come as expected associative array.
 		 *
@@ -395,13 +365,13 @@
 		 */
 		private function _getData($data){
 			if( is_string($data) ) return $data;
-			
+
 			if( !is_array($data) ) return null;
-			
+
 			if( array_key_exists('name', $data) ){
 				return $data;
 			}
-			
+
 			return array(
 				'name' => $data[0],
 				'type' => $data[1],
@@ -410,30 +380,33 @@
 				'size' => $data[4]
 			);
 		}
-		
+
 		/**
-		 * Set default columns (file, mimetype, size and meta) in database table to given language reference values.
+		 * Set default columns (file, mimetype, size and meta) in database table to given reference language values.
 		 *
-		 * @param string $language_code
+		 * @param string  $lang_code
 		 * @param integer $entry_id
 		 */
-		private function _fakeDefaultFile($language_code, $entry_id){
-			try {
+		private function _fakeDefaultFile($lang_code, $entry_id){
+			try{
 				$row = Symphony::Database()->fetchRow(0, sprintf(
-						"SELECT `file-{$language_code}`, `mimetype-{$language_code}`, `size-{$language_code}`, `meta-{$language_code}` FROM `tbl_entries_data_%d` WHERE `entry_id` = %d",
-						$this->get('id'),
-						$entry_id
-						));
-			} catch (Exception $e) {}
-		
-			$fields['file'] = $row['file-'.$language_code];
-			$fields['size'] = $row['size-'.$language_code];
-			$fields['meta'] = $row['meta-'.$language_code];
-			$fields['mimetype'] = $row['mimetype-'.$language_code];
-		
-			try {
+					"SELECT `file-{$lang_code}`, `mimetype-{$lang_code}`, `size-{$lang_code}`, `meta-{$lang_code}` FROM `tbl_entries_data_%d` WHERE `entry_id` = %d",
+					$this->get('id'),
+					$entry_id
+				));
+			} catch( Exception $e ){
+			}
+
+			$fields['file'] = $row['file-'.$lang_code];
+			$fields['size'] = $row['size-'.$lang_code];
+			$fields['meta'] = $row['meta-'.$lang_code];
+			$fields['mimetype'] = $row['mimetype-'.$lang_code];
+
+			try{
 				Symphony::Database()->update($fields, "tbl_entries_data_{$this->get('id')}", "`entry_id` = {$entry_id}");
 			}
-			catch (Exception $e) {}
+			catch( Exception $e ){
+			}
 		}
-}
+
+	}

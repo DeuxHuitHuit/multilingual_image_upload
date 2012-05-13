@@ -4,7 +4,7 @@
 
 	<name>Multilingual Image upload</name>
 
-	<description>The multilingual version of the specialized field for image uploads.</description>
+	<description>Multilingual version of the Image upload field.</description>
 
 	<repo type="github">https://github.com/vlad-ghita/multilingual_image_upload</repo>
 
@@ -18,18 +18,21 @@
 	<authors>
 		<author>
 			<name github="vlad-ghita" symphony="vladG">Vlad Ghita</name>
-			<email>vlad.github@gmail.com</email>
+			<email>vlad.micutul@yahoo.com</email>
 			<website>http://www.xanderadvertising.com</website>
 		</author>
 	</authors>
 
 	<dependencies>
 		<dependency version="1.1.4">https://github.com/vlad-ghita/image_upload</dependency>
-		<dependency version="1.12">https://github.com/symphonycms/jit_image_manipulation</dependency>
-		<dependency version="1.0">https://github.com/vlad-ghita/frontend_localisation</dependency>
+		<dependency version="1.4">https://github.com/vlad-ghita/frontend_localisation</dependency>
 	</dependencies>
 
 	<releases>
+		<release version="1.4" date="2012-02-11" min="2.3"><![CDATA[
+			* Symphony 2.3 compatibility.
+		]]></release>
+
 		<release version="1.3" date="2012-02-07"><![CDATA[
 			* Fixed a bug regarding uploaded data
 			* Added support for defaulting to reference language value
@@ -39,15 +42,15 @@
 			* Fixed a bug with FLang class not being included
 			* Assets are loaded through `displayPublishPanel()` method
 		]]></release>
-		
+
 		<release version="1.2" date="2012-01-10"><![CDATA[
 			* Fixed a bug where data was fetched in Reference Language instead of Current Language.
 		]]></release>
-		
+
 		<release version="1.1" date="2011-12-27"><![CDATA[
 			* Fixed a bug with value filtering.
 		]]></release>
-		
+
 		<release version="1.0" date="2011-12-22" min="2.2.x"><![CDATA[
 			* Initial release.
 		]]></release>
