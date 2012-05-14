@@ -3,15 +3,15 @@ Field: Multilingual Image upload
 
 The multilingual version of the specialized field for image uploads.
 
-* Version: 1.4
-* Build Date: 2012-05-11
+* Version: 1.5
+* Build Date: 2012-05-14
 * Authors:
 	- [Xander Group](http://www.xanderadvertising.com)
 	- Vlad Ghita
 * Requirements:
 	- Symphony 2.3
-	- [Image Upload extension 1.2](https://github.com/vlad-ghita/image_upload)
-	- [Frontend Localisation 1.4](https://github.com/vlad-ghita/frontend_localisation)
+	- [Image Upload extension](https://github.com/vlad-ghita/image_upload)
+	- [Frontend Localisation](https://github.com/vlad-ghita/frontend_localisation)
 
 
 

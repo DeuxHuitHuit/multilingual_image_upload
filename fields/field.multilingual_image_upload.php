@@ -34,7 +34,7 @@
 				`mimetype` varchar(50) default NULL,
 				`meta` varchar(255) default NULL,";
 
-			foreach( FLang::instance()->getLangs() as $lc ){
+			foreach( FLang::getLangs() as $lc ){
 				$query .= "`file-{$lc}` varchar(255) default NULL,
 					`size-{$lc}` int(11) unsigned NULL,
 					`mimetype-{$lc}` varchar(50) default NULL,
@@ -134,9 +134,9 @@
 			$container->appendChild($label);
 
 
-			$main_lang = FLang::instance()->getMainLang();
-			$all_langs = FLang::instance()->getAllLangs();
-			$langs = FLang::instance()->getLangs();
+			$main_lang = FLang::getMainLang();
+			$all_langs = FLang::getAllLangs();
+			$langs = FLang::getLangs();
 
 
 			/* Tabs */
@@ -202,7 +202,7 @@
 			$error = self::__OK__;
 			$field_data = $data;
 
-			foreach( FLang::instance()->getLangs() as $lc ){
+			foreach( FLang::getLangs() as $lc ){
 
 				$file_message = '';
 				$data = $this->_getData($field_data[$lc]);
@@ -229,7 +229,7 @@
 			$result = array();
 			$field_data = $data;
 
-			foreach( FLang::instance()->getLangs() as $lc ){
+			foreach( FLang::getLangs() as $lc ){
 
 				$data = $this->_getData($field_data[$lc]);
 
@@ -258,11 +258,11 @@
 		/*------------------------------------------------------------------------------------------------*/
 
 		public function appendFormattedElement(XMLElement &$wrapper, $data){
-			$lang_code = FLang::instance()->getLangCode();
+			$lang_code = FLang::getLangCode();
 
 			// If value is empty for this language, load value from reference language
 			if( $this->get('def_ref_lang') == 'yes' && $data['file-'.$lang_code] == '' ){
-				$lang_code = FLang::instance()->getMainLang();
+				$lang_code = FLang::getMainLang();
 			}
 
 			$data['file'] = $data['file-'.$lang_code];
@@ -276,10 +276,10 @@
 			// default to backend language
 			$lang_code = Lang::get();
 
-			if( !FLang::instance()->validateLangCode($lang_code) // language not supported
+			if( !FLang::validateLangCode($lang_code) // language not supported
 				|| ($this->get('def_ref_lang') === 'yes' && $data['file-'.$lang_code] === '') // or value is empty for this language
 			){
-				$lang_code = FLang::instance()->getMainLang();
+				$lang_code = FLang::getMainLang();
 			}
 
 			$data['file'] = $data['file-'.$lang_code];
@@ -288,11 +288,11 @@
 		}
 
 		public function getParameterPoolValue($data){
-			$lang_code = FLang::instance()->getLangCode();
+			$lang_code = FLang::getLangCode();
 
 			// If value is empty for this language, load value from main language
 			if( $this->get('def_ref_lang') === 'yes' && $data['file-'.$lang_code] === '' ){
-				$lang_code = FLang::instance()->getMainLang();
+				$lang_code = FLang::getMainLang();
 			}
 
 			return $data['file-'.$lang_code];
@@ -305,7 +305,7 @@
 		
 					<!-- '.__('Modify all values').' -->');
 
-			foreach( FLang::instance()->getLangs() as $lc ){
+			foreach( FLang::getLangs() as $lc ){
 				$fieldname = 'fields['.$this->get('element_name').'][value-'.$lc.']';
 				$label->appendChild(Widget::Input($fieldname));
 			}
@@ -321,7 +321,7 @@
 
 		public function entryDataCleanup($entry_id, $data){
 
-			foreach( FLang::instance()->getLangs() as $lc ){
+			foreach( FLang::getLangs() as $lc ){
 				$file_location = WORKSPACE.'/'.ltrim($data['file-'.$lc], '/');
 
 				if( is_file($file_location) ){
@@ -343,7 +343,7 @@
 		protected function getUniqueFilename($filename, $lang_code = null, $enable = false){
 			if( $enable ){
 				if( empty($lang_code) || !is_string($lang_code) ){
-					$lang_code = FLang::instance()->getMainLang();
+					$lang_code = FLang::getMainLang();
 				}
 
 				$crop = '150';
