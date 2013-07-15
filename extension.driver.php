@@ -53,6 +53,25 @@
 					self::FIELD_TABLE
 				));
 			}
+			
+			if (version_compare($previous_version, '1.7', '<')) {
+				// get all langs
+				$cols = "";
+				foreach( FLang::getLangs() as $lc ){
+					$cols .= sprintf(', `file-%1$s` = substring_index(`file-%1$s`, \'/\', -1)', $lc);
+				}
+				
+				// Remove directory from the upload fields, #1719
+				$upload_tables = Symphony::Database()->fetchCol("field_id", sprintf("SELECT `field_id` FROM `%s`", self::FIELD_TABLE));
+
+				if(is_array($upload_tables) && !empty($upload_tables)) foreach($upload_tables as $field) {
+					Symphony::Database()->query(sprintf(
+						"UPDATE tbl_entries_data_%d SET 
+							`file` = substring_index(file, '/', -1)%s",
+						$field, $cols
+					));
+				}
+			}
 
 			return true;
 		}
