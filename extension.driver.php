@@ -42,6 +42,7 @@
 		}
 
 		public function update($previous_version){
+			// Before 1.3
 			if( version_compare($previous_version, '1.3', '<') ){
 				Symphony::Database()->query(sprintf(
 					"ALTER TABLE `%s` ADD COLUMN `def_ref_lang` ENUM('yes','no') DEFAULT 'no'",
@@ -54,6 +55,7 @@
 				));
 			}
 			
+			// Before 1.7
 			if (version_compare($previous_version, '1.7', '<')) {
 				// get all langs
 				$cols = "";
@@ -70,6 +72,19 @@
 							`file` = substring_index(file, '/', -1)%s",
 						$field, $cols
 					));
+				}
+			}
+			
+			// Before 1.7.1
+			if (version_compare($previous_version, '1.7.1', '<') ){
+				$query = sprintf("ALTER TABLE `%s`
+								ADD COLUMN `resize` enum('yes','no') NOT NULL DEFAULT 'yes'
+							", self::FIELD_TABLE);
+							
+				try {
+					$ret = Symphony::Database()->query($query);
+				}
+				catch ( Exception $e ) {
 				}
 			}
 

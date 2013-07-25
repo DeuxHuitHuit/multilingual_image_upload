@@ -23,6 +23,10 @@
 			<email>vlad.micutul@yahoo.com</email>
 			<website>http://www.xanderadvertising.com</website>
 		</author>
+		<author>
+			<name github="DeuxHuitHuit" symphony="nitriques" twitter="DeuxHuitHuit">Deux Huit Huit</name>
+			<website>http://www.deuxhuithuit.com</website>
+		</author>
 	</authors>
 
 	<dependencies>
@@ -31,6 +35,9 @@
 	</dependencies>
 
 	<releases>
+		<release version="1.7.1" date="2013-07-25" min="2.3.3"><![CDATA[
+			* Update in order to make it work with image_upload 1.4. Breaking compatibility with 1.3.
+		]]></release>
 		<release version="1.7" date="2013-07-12" min="2.3.3"><![CDATA[
 			* Update for Symphony 2.3.2 release: Updating this extension will remove paths from the entries table.
 			See <https://github.com/symphonycms/symphony-2/issues/1719>.
