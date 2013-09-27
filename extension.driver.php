@@ -34,6 +34,7 @@
 					`min_height` int(11) unsigned,
 					`max_width` int(11) unsigned,
 					`max_height` int(11) unsigned,
+					`resize` enum('yes','no') NOT NULL DEFAULT 'yes',
 					PRIMARY KEY (`id`),
 					KEY `field_id` (`field_id`)
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;",
