@@ -125,7 +125,11 @@
 			/*------------------------------------------------------------------------------------------------*/
 
 			$label = Widget::Label($this->get('label'), null, 'file');
-			if( $this->get('required') != 'yes' ) $label->appendChild(new XMLElement('i', __('Optional')));
+			$labeliValue = $this->generateHelpMessage();
+			if( $this->get('required') != 'yes' ) {
+				$labeliValue = $labeliValue . ', ' . __('Optional');
+			}
+			$label->appendChild(new XMLElement('i', $labeliValue));
 			$container->appendChild($label);
 
 
