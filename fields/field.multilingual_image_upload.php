@@ -226,7 +226,7 @@
 			return $error;
 		}
 
-		public function processRawFieldData($data, &$status, &$message, $simulate = false, $entry_id = NULL){
+		public function processRawFieldData($data, &$status, &$message = null, $simulate = false, $entry_id = NULL){
 			if( !is_array($data) || empty($data) ) return parent::processRawFieldData($data, $status, $message, $simulate, $entry_id);
 
 			$result = array();
