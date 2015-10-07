@@ -260,42 +260,40 @@
 		/*  Output  */
 		/*------------------------------------------------------------------------------------------------*/
 
-		public function appendFormattedElement(XMLElement &$wrapper, $data){
+		public function localizeValues(array &$data) {
 			$lang_code = FLang::getLangCode();
 
 			// If value is empty for this language, load value from main language
-			if( $this->get('def_ref_lang') == 'yes' && $data['file-'.$lang_code] == '' ){
+			if( $this->get('def_ref_lang') == 'yes' && empty($data['file-'.$lang_code]) ){
 				$lang_code = FLang::getMainLang();
 			}
 
 			$data['file'] = $data['file-'.$lang_code];
 			$data['meta'] = $data['meta-'.$lang_code];
 			$data['mimetype'] = $data['mimetype-'.$lang_code];
+		}
 
+		public function appendFormattedElement(XMLElement &$wrapper, $data){
+			$this->localizeValues($data);
 			parent::appendFormattedElement($wrapper, $data);
 		}
 
-		public function prepareTableValue($data, XMLElement $link = null, $entry_id = null){
-			$lang_code = FLang::getLangCode();
-
-			if( $this->get('def_ref_lang') === 'yes' && $data['file-'.$lang_code] === '' ){
-				$lang_code = FLang::getMainLang();
+		public function prepareTableValue($data, XMLElement $link = null, $entry_id = null) {
+			if ($link) {
+				$link->setAttribute('style', 'border-bottom: none !important;');
 			}
-
-			$data['file'] = $data['file-'.$lang_code];
-
+			if (is_array($data)) {
+				$this->localizeValues($data);
+			}
 			return parent::prepareTableValue($data, $link, $entry_id);
 		}
 
-		public function getParameterPoolValue($data){
-			$lang_code = FLang::getLangCode();
-
-			// If value is empty for this language, load value from main language
-			if( $this->get('def_ref_lang') === 'yes' && $data['file-'.$lang_code] === '' ){
-				$lang_code = FLang::getMainLang();
+		public function prepareTextValue($data, $entry_id = null) {
+			if (!is_array($data)) {
+				return null;
 			}
-
-			return $data['file-'.$lang_code];
+			$this->localizeValues($data);
+			return $data['file'];
 		}
 
 		public function getExampleFormMarkup(){
