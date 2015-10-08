@@ -6,7 +6,7 @@
 
 	<description>Multilingual version of the Image upload field.</description>
 
-	<repo type="github">https://github.com/vlad-ghita/multilingual_image_upload</repo>
+	<repo type="github">https://github.com/DeuxHuitHuit/multilingual_image_upload</repo>
 	
 	<url type="discuss">http://symphony-cms.com/discuss/thread/81813/</url>
 
@@ -25,16 +25,22 @@
 		</author>
 		<author>
 			<name github="DeuxHuitHuit" symphony="nitriques" twitter="DeuxHuitHuit">Deux Huit Huit</name>
-			<website>http://www.deuxhuithuit.com</website>
+			<website>https://deuxhuithuit.com</website>
 		</author>
 	</authors>
 
 	<dependencies>
-		<dependency version="1.3">https://github.com/vlad-ghita/image_upload</dependency>
-		<dependency version="1.6">https://github.com/vlad-ghita/frontend_localisation</dependency>
+		<dependency version="1.6">https://github.com/DeuxHuitHuit/image_upload</dependency>
+		<dependency version="2.6">https://github.com/DeuxHuitHuit/frontend_localisation</dependency>
 	</dependencies>
 
 	<releases>
+		<release version="1.7.2" date="2015-10-07" min="2.3.3" max="2.6.x"><![CDATA[
+			* Bug fixes
+			* Added a help text when 'use default language' is activated
+			* Fix some issues with svg (missing mimetype)
+			* Added French translation
+		]]></release>
 		<release version="1.7.1" date="2013-07-25" min="2.3.3"><![CDATA[
 			* Update in order to make it work with image_upload 1.4. Breaking compatibility with 1.3.
 		]]></release>
