@@ -272,6 +272,7 @@
 			}
 
 			$data['file'] = $data['file-'.$lang_code];
+			$data['size'] = $data['size-'.$lang_code];
 			$data['meta'] = $data['meta-'.$lang_code];
 			$data['mimetype'] = $data['mimetype-'.$lang_code];
 		}
