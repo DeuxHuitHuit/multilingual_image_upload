@@ -127,7 +127,10 @@
 			$label = Widget::Label($this->get('label'), null, 'file');
 			$labeliValue = $this->generateHelpMessage();
 			if( $this->get('required') != 'yes' ) {
-				$labeliValue = $labeliValue . ', ' . __('Optional');
+				$labeliValue .= ', ' . __('Optional');
+				if ($this->get('def_ref_lang') == 'yes') {
+					$labeliValue .= ', ' . __('Empty values defaults to %s', array($all_langs[$main_lang]));
+				}
 			}
 			$label->appendChild(new XMLElement('i', $labeliValue));
 			$container->appendChild($label);

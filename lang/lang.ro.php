@@ -60,4 +60,6 @@
 		'Modify all values' =>
 		'Modifică toate valorile',
 
+		'Empty values defaults to %s' => null,
+
 	);
