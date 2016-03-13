@@ -2,13 +2,9 @@
 
 	if( !defined('__IN_SYMPHONY__') ) die('<h2>Symphony Error</h2><p>You cannot directly access this file</p>');
 
-
-
 	require_once(EXTENSIONS.'/image_upload/fields/field.image_upload.php');
 	require_once(EXTENSIONS.'/frontend_localisation/extension.driver.php');
 	require_once(EXTENSIONS.'/frontend_localisation/lib/class.FLang.php');
-
-
 
 	final class fieldMultilingual_image_upload extends fieldImage_upload
 	{
