@@ -1,13 +1,9 @@
 <?php
 
-	if( !defined('__IN_SYMPHONY__') ) die('<h2>Symphony Error</h2><p>You cannot directly access this file</p>');
+	if(!defined('__IN_SYMPHONY__')) die('<h2>Symphony Error</h2><p>You cannot directly access this file</p>');
 
-
-
-	define_safe(MIU_NAME, 'Field: Multilingual Image Upload');
+	define_safe(MIU_NAME, 'Multilingual Image Upload');
 	define_safe(MIU_GROUP, 'multilingual_image_upload');
-
-
 
 	class Extension_Multilingual_Image_Upload extends Extension
 	{
@@ -15,25 +11,24 @@
 
 		protected static $assets_loaded = false;
 
-
-
 		/*------------------------------------------------------------------------------------------------*/
 		/*  Installation  */
 		/*------------------------------------------------------------------------------------------------*/
 
-		public function install(){
+		public function install()
+		{
 			return Symphony::Database()->query(sprintf(
 				"CREATE TABLE `%s` (
-					`id` int(11) unsigned NOT NULL auto_increment,
-					`field_id` int(11) unsigned NOT NULL,
-					`destination` varchar(255) NOT NULL,
-					`validator` varchar(50),
-					`unique` enum('yes','no') default 'yes',
-					`def_ref_lang` enum('yes','no') default 'yes',
-					`min_width` int(11) unsigned,
-					`min_height` int(11) unsigned,
-					`max_width` int(11) unsigned,
-					`max_height` int(11) unsigned,
+					`id` INT(11) unsigned NOT NULL auto_increment,
+					`field_id` INT(11) unsigned NOT NULL,
+					`destination` VARCHAR(255) NOT NULL,
+					`validator` VARCHAR(50),
+					`unique` enum('yes','no') NOT NULL DEFAULT 'yes',
+					`required_languages` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+					`min_width` INT(11) unsigned,
+					`min_height` INT(11) unsigned,
+					`max_width` INT(11) unsigned,
+					`max_height` INT(11) unsigned,
 					`resize` enum('yes','no') NOT NULL DEFAULT 'yes',
 					PRIMARY KEY (`id`),
 					KEY `field_id` (`field_id`)
@@ -42,9 +37,10 @@
 			));
 		}
 
-		public function update($previous_version){
+		public function update($previous_version)
+		{
 			// Before 1.3
-			if( version_compare($previous_version, '1.3', '<') ){
+			if (version_compare($previous_version, '1.3', '<')) {
 				Symphony::Database()->query(sprintf(
 					"ALTER TABLE `%s` ADD COLUMN `def_ref_lang` ENUM('yes','no') DEFAULT 'no'",
 					self::FIELD_TABLE
@@ -59,29 +55,30 @@
 			// Before 1.7
 			if (version_compare($previous_version, '1.7', '<')) {
 				// get all langs
-				$cols = "";
-				foreach( FLang::getLangs() as $lc ){
+				$cols = '';
+				foreach(FLang::getLangs() as $lc) {
 					$cols .= sprintf(', `file-%1$s` = substring_index(`file-%1$s`, \'/\', -1)', $lc);
 				}
 				
 				// Remove directory from the upload fields, #1719
 				$upload_tables = Symphony::Database()->fetchCol("field_id", sprintf("SELECT `field_id` FROM `%s`", self::FIELD_TABLE));
 
-				if(is_array($upload_tables) && !empty($upload_tables)) foreach($upload_tables as $field) {
-					Symphony::Database()->query(sprintf(
-						"UPDATE tbl_entries_data_%d SET 
-							`file` = substring_index(file, '/', -1)%s",
-						$field, $cols
-					));
+				if (is_array($upload_tables) && !empty($upload_tables)) {
+					foreach($upload_tables as $field) {
+						Symphony::Database()->query(sprintf(
+							"UPDATE tbl_entries_data_%d SET 
+								`file` = substring_index(file, '/', -1)%s",
+							$field, $cols
+						));
+					}
 				}
 			}
-			
+
 			// Before 1.7.1
-			if (version_compare($previous_version, '1.7.1', '<') ){
+			if (version_compare($previous_version, '1.7.1', '<')) {
 				$query = sprintf("ALTER TABLE `%s`
 								ADD COLUMN `resize` enum('yes','no') NOT NULL DEFAULT 'yes'
 							", self::FIELD_TABLE);
-							
 				try {
 					$ret = Symphony::Database()->query($query);
 				}
@@ -89,21 +86,24 @@
 				}
 			}
 
-			return true;
-		}
-
-		public function uninstall(){
-			try{
+			if (version_compare($previous_version, '2.0.0', '<')) {
 				Symphony::Database()->query(sprintf(
-					"DROP TABLE `%s`",
+					"ALTER TABLE `%s`
+						CHANGE COLUMN `def_ref_lang` `default_main_lang` ENUM('yes', 'no') CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no',
+						ADD `required_languages` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL;",
 					self::FIELD_TABLE
 				));
 			}
-			catch( DatabaseException $dbe ){
-				// table deosn't exist
-			}
 
 			return true;
+		}
+
+		public function uninstall()
+		{
+			return Symphony::Database()->query(sprintf(
+				"DROP TABLE IF EXISTS `%s`",
+				self::FIELD_TABLE
+			));
 		}
 
 
