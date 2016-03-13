@@ -6,7 +6,7 @@ The multilingual version of Image Upload field.
 
 ## 1 About ##
 
-@see [Image Upload](https://github.com/vlad-ghita/image_upload)
+@see [Image Upload](https://github.com/DeuxHuitHuit/image_upload)
 
 
 
