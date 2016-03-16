@@ -468,10 +468,10 @@
 
 		public function getExampleFormMarkup(){
 			$label = Widget::Label($this->get('label').'
-					<!-- '.__('Modify just current language value').' -->
-					<input name="fields['.$this->get('element_name').'][{$url-fl-language}]" type="file" />
+		<!-- '.__('Modify just current language value').' -->
+		<input name="fields['.$this->get('element_name').'][{$url-fl-language}]" type="file" />
 
-					<!-- '.__('Modify all values').' -->');
+		<!-- '.__('Modify all values').' -->');
 
 			foreach( FLang::getLangs() as $lc ){
 				$label->appendChild(Widget::Input("fields[{$this->get('element_name')}][{$lc}]", null, 'file'));
