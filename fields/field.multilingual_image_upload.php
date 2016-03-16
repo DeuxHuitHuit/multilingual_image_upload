@@ -444,7 +444,7 @@
 		/*------------------------------------------------------------------------------------------------*/
 
 		public function appendFormattedElement(XMLElement &$wrapper, $data){
-			$this->localizeValues($data);
+			$data = $this->localizeValues($data);
 			parent::appendFormattedElement($wrapper, $data);
 		}
 
@@ -453,7 +453,7 @@
 				$link->setAttribute('style', 'border-bottom: none !important;');
 			}
 			if (is_array($data)) {
-				$this->localizeValues($data);
+				$data = $this->localizeValues($data);
 			}
 			return parent::prepareTableValue($data, $link, $entry_id);
 		}
@@ -462,7 +462,7 @@
 			if (!is_array($data)) {
 				return null;
 			}
-			$this->localizeValues($data);
+			$data = $this->localizeValues($data);
 			return $data['file'];
 		}
 
@@ -532,12 +532,13 @@
 			return $lc;
 		}
 
-		public function localizeValues(array &$data) {
+		public function localizeValues(array $data) {
 			$lang_code = $this->getLang($data);
 			$data['file'] = $data["file-$lang_code"];
 			$data['size'] = $data["size-$lang_code"];
 			$data['meta'] = $data["meta-$lang_code"];
 			$data['mimetype'] = $data["mimetype-$lang_code"];
+			return $data;
 		}
 
 		public function entryDataCleanup($entry_id, $data)
