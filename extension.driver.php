@@ -38,7 +38,7 @@
 			));
 		}
 
-		public function update($previous_version)
+		public function update($previousVersion = false)
 		{
 			// Before 1.3
 			if (version_compare($previous_version, '1.3', '<')) {
