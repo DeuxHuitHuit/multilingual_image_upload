@@ -71,7 +71,7 @@
 			return parent::get($field);
 		}
 
-		public function findDefaults(&$settings)
+		public function findDefaults(array &$settings)
 		{
 			$settings['default_main_lang'] = 'no';
 			return parent::findDefaults($settings);
@@ -187,7 +187,7 @@
 		/*  Publish  */
 		/*------------------------------------------------------------------------------------------------*/
 
-		public function displayPublishPanel(XMLElement &$wrapper, $data = NULL, $flagWithError = NULL, $fieldnamePrefix = NULL, $fieldnamePostfix = NULL)
+		public function displayPublishPanel(XMLElement &$wrapper, $data = NULL, $flagWithError = NULL, $fieldnamePrefix = NULL, $fieldnamePostfix = NULL, $entry_id = NULL)
 		{
 			Extension_Frontend_Localisation::appendAssets();
 			Extension_Multilingual_Image_Upload::appendAssets();
@@ -443,7 +443,7 @@
 		/*  Output  */
 		/*------------------------------------------------------------------------------------------------*/
 
-		public function appendFormattedElement(XMLElement &$wrapper, $data){
+		public function appendFormattedElement(XMLElement &$wrapper, $data, $encode = false, $mode = NULL, $entry_id = NULL){
 			$data = $this->localizeValues($data);
 			parent::appendFormattedElement($wrapper, $data);
 		}
@@ -544,7 +544,7 @@
 			return $data;
 		}
 
-		public function entryDataCleanup($entry_id, $data)
+		public function entryDataCleanup($entry_id, $data = NULL)
 		{
 			foreach (FLang::getLangs() as $lc) {
 				$file_location = WORKSPACE.'/'.ltrim($data['file-'.$lc], '/');
@@ -559,7 +559,7 @@
 			return true;
 		}
 
-		public function getParameterPoolValue($data) {
+		public function getParameterPoolValue(array $data, $entry_id = NULL) {
 			$lc = $this->getLang();
 			return $data["file-$lc"];
 		}

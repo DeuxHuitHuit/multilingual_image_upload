@@ -24,7 +24,7 @@
 					`destination` VARCHAR(255) NOT NULL,
 					`validator` VARCHAR(50),
 					`unique` enum('yes','no') NOT NULL DEFAULT 'yes',
-					`default_main_lang` ENUM('yes', 'no') CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no',
+					`default_main_lang` ENUM('yes', 'no', '') CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no',
 					`required_languages` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
 					`min_width` INT(11) unsigned,
 					`min_height` INT(11) unsigned,
