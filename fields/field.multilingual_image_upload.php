@@ -1,6 +1,6 @@
 <?php
 
-	if( !defined('__IN_SYMPHONY__') ) die('<h2>Symphony Error</h2><p>You cannot directly access this file</p>');
+	if (!defined('__IN_SYMPHONY__')) die('<h2>Symphony Error</h2><p>You cannot directly access this file</p>');
 
 	require_once(EXTENSIONS.'/image_upload/fields/field.image_upload.php');
 	require_once(EXTENSIONS.'/frontend_localisation/extension.driver.php');
@@ -13,13 +13,37 @@
 		/*  Definition  */
 		/*------------------------------------------------------------------------------------------------*/
 
+		private $currentLc = null;
+
 		public function __construct(){
 			parent::__construct();
 
 			$this->_name = __('Multilingual Image Upload');
 		}
 
-		public function createTable(){
+		public static function generateTableColumns()
+		{
+			$cols = array();
+			foreach (FLang::getLangs() as $lc) {
+				$cols[] = "`file-{$lc}` varchar(255) default NULL,";
+				$cols[] = "`size-{$lc}` int(11) unsigned NULL,";
+				$cols[] = "`mimetype-{$lc}` varchar(50) default NULL,";
+				$cols[] = "`meta-{$lc}` varchar(255) default NULL,";
+			}
+			return $cols;
+		}
+
+		public static function generateTableKeys()
+		{
+			$keys = array();
+			foreach (FLang::getLangs() as $lc) {
+				$keys[] = "KEY `file-{$lc}` (`file-{$lc}`),";
+			}
+			return $keys;
+		}
+
+		public function createTable()
+		{
 			$query = "
 				CREATE TABLE IF NOT EXISTS `tbl_entries_data_{$this->get('id')}` (
 					`id` int(11) unsigned NOT NULL auto_increment,
@@ -29,19 +53,16 @@
 					`mimetype` varchar(50) default NULL,
 					`meta` varchar(255) default NULL,";
 
-			foreach( FLang::getLangs() as $lc ){
-				$query .= sprintf('
-					`file-%1$s` varchar(255) default NULL,
-					`size-%1$s` int(11) unsigned NULL,
-					`mimetype-%1$s` varchar(50) default NULL,
-					`meta-%1$s` varchar(255) default NULL,',
-					$lc
-				);
-			}
+			$query .= implode('', self::generateTableColumns());
 
 			$query .= "
 					PRIMARY KEY (`id`),
 					UNIQUE KEY `entry_id` (`entry_id`)
+			";
+			
+			$query .= implode('', self::generateTableKeys());
+			
+			$query .= "
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
 
 			return Symphony::Database()->query($query);
@@ -79,6 +100,8 @@
 
 		public function displaySettingsPanel(XMLElement &$wrapper, $errors = null)
 		{
+			Extension_Multilingual_Image_Upload::appendAssets(Extension_Multilingual_Image_Upload::SETTINGS_HEADERS);
+
 			parent::displaySettingsPanel($wrapper, $errors);
 
 			$required_pos = $wrapper->getNumberOfChildren() - 3;
@@ -181,7 +204,7 @@
 				WHERE
 					`field_id` = '%s';",
 				$this->handle(),
-				$this->get('default_main_lang'),
+				$this->get('default_main_lang') === 'yes' ? 'yes' :'no',
 				implode(',', $this->get('required_languages')),
 				$this->get('id')
 			));
@@ -196,7 +219,7 @@
 		public function displayPublishPanel(XMLElement &$wrapper, $data = null, $flagWithError = null, $fieldnamePrefix = null, $fieldnamePostfix = null, $entry_id = null)
 		{
 			Extension_Frontend_Localisation::appendAssets();
-			Extension_Multilingual_Image_Upload::appendAssets();
+			Extension_Multilingual_Image_Upload::appendAssets(Extension_Multilingual_Image_Upload::PUBLISH_HEADERS);
 
 			$main_lang = FLang::getMainLang();
 			$all_langs = FLang::getAllLangs();
@@ -298,17 +321,17 @@
 			/*  Errors  */
 			/*------------------------------------------------------------------------------------------------*/
 
-			if( !is_dir(DOCROOT.$this->get('destination').'/') ){
+			if (!@is_dir(DOCROOT.$this->get('destination').'/')) {
 				$flagWithError = __('The destination directory, <code>%s</code>, does not exist.', array($this->get('destination')));
 			}
-			elseif( !$flagWithError && !is_writable(DOCROOT.$this->get('destination').'/') ){
+			else if (!$flagWithError && !is_writable(DOCROOT.$this->get('destination').'/')) {
 				$flagWithError = __('Destination folder, <code>%s</code>, is not writable. Please check permissions.', array($this->get('destination')));
 			}
 
-			if( $flagWithError != null ){
+			if ($flagWithError != null) {
 				$wrapper->appendChild(Widget::Error($container, $flagWithError));
 			}
-			else{
+			else {
 				$wrapper->appendChild($container);
 			}
 		}
@@ -328,14 +351,11 @@
 			$original_required  = $this->get('required');
 
 			foreach (FLang::getLangs() as $lc) {
+				$this->currentLc = $lc;
 				$this->set('required', in_array($lc, $required_languages) ? 'yes' : 'no');
 
 				$file_message = '';
 				$data = $this->_getData($field_data[$lc]);
-
-				if (is_array($data) && isset($data['name'])) {
-					$data['name'] = $this->getUniqueFilename($data['name'], $lc, true);
-				}
 
 				$status = parent::checkPostFieldData($data, $file_message, $entry_id);
 
@@ -355,6 +375,7 @@
 			}
 
 			$this->set('required', $original_required);
+			$this->currentLc = null;
 
 			return $error;
 		}
@@ -372,16 +393,13 @@
 			$missing_langs = array();
 
 			foreach (FLang::getLangs() as $lc) {
+				$this->currentLc = $lc;
 				if (!isset($field_data[$lc])) {
 					$missing_langs[] = $lc;
 					continue;
 				}
 
 				$data = $this->_getData($field_data[$lc]);
-
-				if (is_array($data) && isset($data['name'])) {
-					$data['name'] = $this->getUniqueFilename($data['name'], $lc, true);
-				}
 
 				// Make this language the default for now
 				// parent::processRawFieldData needs this.
@@ -413,6 +431,8 @@
 					}
 				}
 			}
+
+			$this->currentLc = null;
 
 			if (!empty($missing_langs) && $entry_id) {
 				$crt_data = $this->getCurrentData($entry_id);
@@ -479,7 +499,7 @@
 
 		<!-- '.__('Modify all values').' -->');
 
-			foreach( FLang::getLangs() as $lc ){
+			foreach( FLang::getLangs() as $lc) {
 				$label->appendChild(Widget::Input("fields[{$this->get('element_name')}][{$lc}]", null, 'file'));
 			}
 
@@ -555,7 +575,7 @@
 			foreach (FLang::getLangs() as $lc) {
 				$file_location = WORKSPACE.'/'.ltrim($data['file-'.$lc], '/');
 
-				if( is_file($file_location) ){
+				if (is_file($file_location)) {
 					General::deleteFile($file_location);
 				}
 			}
@@ -574,21 +594,25 @@
 		/*  In-house  */
 		/*------------------------------------------------------------------------------------------------*/
 
-		protected function getUniqueFilename($filename, $lang_code = null, $enable = false){
-			if( $enable ){
-				if( empty($lang_code) || !is_string($lang_code) ){
-					$lang_code = FLang::getMainLang();
-				}
-
-				$crop = '150';
-				$replace = $lang_code;
-
-				if( $this->get('unique') == 'yes' ) $replace .= ".'-'.time()";
-
-				return preg_replace("/(.*)(\.[^\.]+)/e", "substr('$1', 0, $crop).'-'.$replace.'$2'", $filename);
+		protected function getUniqueFilename($filename)
+		{
+			if (empty($filename)) {
+				return $filename;
 			}
-
-			return $filename;
+			
+			if (!$this->currentLc) {
+				throw new Exception('No current language set!');
+			}
+			
+			$unique = $this->get('unique') == 'yes';
+			$lang_code = $this->currentLc;
+			
+			return preg_replace_callback('/(.*)(\.[^\.]+)/', function ($matches) use ($lang_code, $unique) {
+				if ($unique) {
+					$lang_code .= '-' . time();
+				}
+				return substr($matches[1], 0, 150) . '-' . $lang_code . $matches[2];
+			}, $filename);
 		}
 
 
@@ -597,15 +621,20 @@
 		 *
 		 * @param array $data
 		 */
-		private function _getData($data){
-			if( is_string($data) ) return $data;
-
-			if( !is_array($data) ) return null;
-
-			if( array_key_exists('name', $data) ){
+		private function _getData($data)
+		{
+			if (is_string($data)) {
 				return $data;
 			}
 
+			if (!is_array($data)) {
+				return null;
+			}
+
+			if (array_key_exists('name', $data)) {
+				return $data;
+			}
+			
 			return array(
 				'name' => $data[0],
 				'type' => $data[1],
