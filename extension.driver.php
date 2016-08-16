@@ -9,7 +9,10 @@
 	{
 		const FIELD_TABLE = 'tbl_fields_multilingual_image_upload';
 
-		protected static $assets_loaded = false;
+		protected static $appendedHeaders = 0;
+		
+		const PUBLISH_HEADERS = 1;
+		const SETTINGS_HEADERS = 4;
 
 		/*------------------------------------------------------------------------------------------------*/
 		/*  Installation  */
@@ -83,7 +86,8 @@
 				try {
 					$ret = Symphony::Database()->query($query);
 				}
-				catch ( Exception $e ) {
+				catch (Exception $e) {
+					// ignore
 				}
 			}
 
@@ -157,17 +161,18 @@
 		 *
 		 * @param array $context
 		 */
-		public function dFLSavePreferences($context){
+		public function dFLSavePreferences($context)
+		{
 			$fields = Symphony::Database()->fetch(sprintf(
 				'SELECT `field_id` FROM `%s`',
 				self::FIELD_TABLE
 			));
 
-			if( is_array($fields) && !empty($fields) ){
+			if (is_array($fields) && !empty($fields)){
 				$consolidate = $context['context']['settings'][MIU_GROUP]['consolidate'];
 
 				// Foreach field check multilanguage values foreach language
-				foreach( $fields as $field ){
+				foreach ($fields as $field) {
 					$entries_table = 'tbl_entries_data_'.$field["field_id"];
 
 					try{
@@ -176,7 +181,7 @@
 							$entries_table
 						));
 					}
-					catch( DatabaseException $dbe ){
+					catch( DatabaseException $dbe) {
 						// Field doesn't exist. Better remove it's settings
 						Symphony::Database()->query(sprintf(
 							"DELETE FROM `%s` WHERE `field_id` = '%s';",
@@ -188,13 +193,13 @@
 					$columns = array();
 
 					// Remove obsolete fields
-					if( is_array($show_columns) && !empty($show_columns) )
+					if (is_array($show_columns) && !empty($show_columns))
 
-						foreach( $show_columns as $column ){
+						foreach ($show_columns as $column) {
 							$lc = substr($column['Field'], strlen($column['Field']) - 2);
 
 							// If not consolidate option AND column lang_code not in supported languages codes -> Drop Column
-							if( ($consolidate !== 'yes') && !in_array($lc, $context['new_langs']) )
+							if (($consolidate !== 'yes') && !in_array($lc, $context['new_langs']))
 								Symphony::Database()->query(sprintf(
 									'ALTER TABLE `%1$s`
 										DROP COLUMN `file-%2$s`,
@@ -208,9 +213,8 @@
 						}
 
 					// Add new fields
-					foreach( $context['new_langs'] as $lc )
-
-						if( !in_array('file-'.$lc, $columns) )
+					foreach ($context['new_langs'] as $lc) {
+						if (!in_array('file-'.$lc, $columns)) {
 							Symphony::Database()->query(sprintf(
 								'ALTER TABLE `%1$s`
 									ADD COLUMN `file-%2$s` varchar(255) default NULL,
@@ -219,6 +223,8 @@
 									ADD COLUMN `meta-%2$s` varchar(255) default NULL;',
 								$entries_table, $lc
 							));
+						}
+					}
 				}
 			}
 		}
@@ -229,17 +235,26 @@
 		/*  Public utilities  */
 		/*------------------------------------------------------------------------------------------------*/
 
-		public static function appendAssets(){
-			if( self::$assets_loaded === false
+		public static function appendAssets($type)
+		{
+			
+			if ((self::$appendedHeaders & $type) !== $type
 				&& class_exists('Administration')
 				&& Administration::instance() instanceof Administration
-				&& Administration::instance()->Page instanceof HTMLPage ){
-
-				self::$assets_loaded = true;
+				&& Administration::instance()->Page instanceof HTMLPage) {
 
 				$page = Administration::instance()->Page;
 
-				$page->addScriptToHead(URL.'/extensions/'.MIU_GROUP.'/assets/'.MIU_GROUP.'.publish.js', null, false);
+				if ($type === self::PUBLISH_HEADERS) {
+					$page->addScriptToHead(URL.'/extensions/'.MIU_GROUP.'/assets/'.MIU_GROUP.'.publish.js', null, false);
+				}
+				
+				if ($type === self::SETTINGS_HEADERS) {
+					$page->addScriptToHead(URL.'/extensions/'.MIU_GROUP.'/assets/'.MIU_GROUP.'.settings.js', null, false);
+				}
+				
+				self::$appendedHeaders |= $type;
 			}
+			
 		}
 	}

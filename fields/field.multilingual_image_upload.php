@@ -1,6 +1,6 @@
 <?php
 
-	if( !defined('__IN_SYMPHONY__') ) die('<h2>Symphony Error</h2><p>You cannot directly access this file</p>');
+	if (!defined('__IN_SYMPHONY__')) die('<h2>Symphony Error</h2><p>You cannot directly access this file</p>');
 
 	require_once(EXTENSIONS.'/image_upload/fields/field.image_upload.php');
 	require_once(EXTENSIONS.'/frontend_localisation/extension.driver.php');
@@ -19,7 +19,29 @@
 			$this->_name = __('Multilingual Image Upload');
 		}
 
-		public function createTable(){
+		public static function generateTableColumns()
+		{
+			$cols = array();
+			foreach (FLang::getLangs() as $lc) {
+				$cols[] = "`file-{$lc}` varchar(255) default NULL,";
+				$cols[] = "`size-{$lc}` int(11) unsigned NULL,";
+				$cols[] = "`mimetype-{$lc}` varchar(50) default NULL,";
+				$cols[] = "`meta-{$lc}` varchar(255) default NULL,";
+			}
+			return $cols;
+		}
+
+		public static function generateTableKeys()
+		{
+			$keys = array();
+			foreach (FLang::getLangs() as $lc) {
+				$keys[] = "KEY `file-{$lc}` (`file-{$lc}`),";
+			}
+			return $keys;
+		}
+
+		public function createTable()
+		{
 			$query = "
 				CREATE TABLE IF NOT EXISTS `tbl_entries_data_{$this->get('id')}` (
 					`id` int(11) unsigned NOT NULL auto_increment,
@@ -29,19 +51,16 @@
 					`mimetype` varchar(50) default NULL,
 					`meta` varchar(255) default NULL,";
 
-			foreach( FLang::getLangs() as $lc ){
-				$query .= sprintf('
-					`file-%1$s` varchar(255) default NULL,
-					`size-%1$s` int(11) unsigned NULL,
-					`mimetype-%1$s` varchar(50) default NULL,
-					`meta-%1$s` varchar(255) default NULL,',
-					$lc
-				);
-			}
+			$query .= implode('', self::generateTableColumns());
 
 			$query .= "
 					PRIMARY KEY (`id`),
 					UNIQUE KEY `entry_id` (`entry_id`)
+			";
+			
+			$query .= implode('', self::generateTableKeys());
+			
+			$query .= "
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
 
 			return Symphony::Database()->query($query);
@@ -79,6 +98,8 @@
 
 		public function displaySettingsPanel(XMLElement &$wrapper, $errors = null)
 		{
+			Extension_Multilingual_Image_Upload::appendAssets(Extension_Multilingual_Image_Upload::SETTINGS_HEADERS);
+
 			parent::displaySettingsPanel($wrapper, $errors);
 
 			$required_pos = $wrapper->getNumberOfChildren() - 3;
@@ -190,7 +211,7 @@
 		public function displayPublishPanel(XMLElement &$wrapper, $data = null, $flagWithError = null, $fieldnamePrefix = null, $fieldnamePostfix = null, $entry_id = null)
 		{
 			Extension_Frontend_Localisation::appendAssets();
-			Extension_Multilingual_Image_Upload::appendAssets();
+			Extension_Multilingual_Image_Upload::appendAssets(Extension_Multilingual_Image_Upload::PUBLISH_HEADERS);
 
 			$main_lang = FLang::getMainLang();
 			$all_langs = FLang::getAllLangs();
@@ -292,17 +313,17 @@
 			/*  Errors  */
 			/*------------------------------------------------------------------------------------------------*/
 
-			if( !is_dir(DOCROOT.$this->get('destination').'/') ){
+			if (!@is_dir(DOCROOT.$this->get('destination').'/')) {
 				$flagWithError = __('The destination directory, <code>%s</code>, does not exist.', array($this->get('destination')));
 			}
-			elseif( !$flagWithError && !is_writable(DOCROOT.$this->get('destination').'/') ){
+			else if (!$flagWithError && !is_writable(DOCROOT.$this->get('destination').'/')) {
 				$flagWithError = __('Destination folder, <code>%s</code>, is not writable. Please check permissions.', array($this->get('destination')));
 			}
 
-			if( $flagWithError != null ){
+			if ($flagWithError != null) {
 				$wrapper->appendChild(Widget::Error($container, $flagWithError));
 			}
-			else{
+			else {
 				$wrapper->appendChild($container);
 			}
 		}
@@ -473,7 +494,7 @@
 
 		<!-- '.__('Modify all values').' -->');
 
-			foreach( FLang::getLangs() as $lc ){
+			foreach( FLang::getLangs() as $lc) {
 				$label->appendChild(Widget::Input("fields[{$this->get('element_name')}][{$lc}]", null, 'file'));
 			}
 
@@ -549,7 +570,7 @@
 			foreach (FLang::getLangs() as $lc) {
 				$file_location = WORKSPACE.'/'.ltrim($data['file-'.$lc], '/');
 
-				if( is_file($file_location) ){
+				if (is_file($file_location)) {
 					General::deleteFile($file_location);
 				}
 			}
@@ -569,15 +590,15 @@
 		/*------------------------------------------------------------------------------------------------*/
 
 		protected function getUniqueFilename($filename, $lang_code = null, $enable = false){
-			if( $enable ){
-				if( empty($lang_code) || !is_string($lang_code) ){
+			if ($enable) {
+				if (empty($lang_code) || !is_string($lang_code)) {
 					$lang_code = FLang::getMainLang();
 				}
 
 				$crop = '150';
 				$replace = $lang_code;
 
-				if( $this->get('unique') == 'yes' ) $replace .= ".'-'.time()";
+				if ($this->get('unique') == 'yes' ) $replace .= ".'-'.time()";
 
 				return preg_replace("/(.*)(\.[^\.]+)/e", "substr('$1', 0, $crop).'-'.$replace.'$2'", $filename);
 			}
@@ -592,11 +613,15 @@
 		 * @param array $data
 		 */
 		private function _getData($data){
-			if( is_string($data) ) return $data;
+			if (is_string($data)) {
+				return $data;
+			}
 
-			if( !is_array($data) ) return null;
+			if (!is_array($data)) {
+				return null;
+			}
 
-			if( array_key_exists('name', $data) ){
+			if (array_key_exists('name', $data)) {
 				return $data;
 			}
 
