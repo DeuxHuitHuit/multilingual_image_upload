@@ -164,8 +164,6 @@
 
 			if ($this->get('default_main_lang') == 'yes') {
 				$this->set('default_main_lang', 'yes');
-			} elseif ($this->get('default_main_lang') == 'no') {
-				$this->set('default_main_lang', 'no');
 			} else {
 				$this->set('default_main_lang', 'no');
 			}
