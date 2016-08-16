@@ -44,7 +44,7 @@
 		public function update($previousVersion = false)
 		{
 			// Before 1.3
-			if (version_compare($previous_version, '1.3', '<')) {
+			if (version_compare($previousVersion, '1.3', '<')) {
 				Symphony::Database()->query(sprintf(
 					"ALTER TABLE `%s` ADD COLUMN `def_ref_lang` ENUM('yes','no') DEFAULT 'no'",
 					self::FIELD_TABLE
@@ -57,7 +57,7 @@
 			}
 			
 			// Before 1.7
-			if (version_compare($previous_version, '1.7', '<')) {
+			if (version_compare($previousVersion, '1.7', '<')) {
 				// get all langs
 				$cols = '';
 				foreach(FLang::getLangs() as $lc) {
@@ -79,7 +79,7 @@
 			}
 
 			// Before 1.7.1
-			if (version_compare($previous_version, '1.7.1', '<')) {
+			if (version_compare($previousVersion, '1.7.1', '<')) {
 				$query = sprintf("ALTER TABLE `%s`
 								ADD COLUMN `resize` enum('yes','no') NOT NULL DEFAULT 'yes'
 							", self::FIELD_TABLE);
@@ -91,7 +91,7 @@
 				}
 			}
 
-			if (version_compare($previous_version, '2.0.0', '<')) {
+			if (version_compare($previousVersion, '2.0.0', '<')) {
 				Symphony::Database()->query(sprintf(
 					"ALTER TABLE `%s`
 						CHANGE COLUMN `def_ref_lang` `default_main_lang` ENUM('yes', 'no') CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no',
