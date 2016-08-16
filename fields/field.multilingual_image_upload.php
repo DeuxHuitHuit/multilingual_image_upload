@@ -185,6 +185,12 @@
 
 			$this->set('required_languages', $required_languages);
 
+			if ($this->get('default_main_lang') == 'yes') {
+				$this->set('default_main_lang', 'yes');
+			} else {
+				$this->set('default_main_lang', 'no');
+			}
+
 			if (!parent::commit()) {
 				return false;
 			}
