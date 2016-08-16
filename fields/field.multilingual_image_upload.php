@@ -13,6 +13,8 @@
 		/*  Definition  */
 		/*------------------------------------------------------------------------------------------------*/
 
+		private $currentLc = null;
+
 		public function __construct(){
 			parent::__construct();
 
@@ -343,14 +345,11 @@
 			$original_required  = $this->get('required');
 
 			foreach (FLang::getLangs() as $lc) {
+				$this->currentLc = $lc;
 				$this->set('required', in_array($lc, $required_languages) ? 'yes' : 'no');
 
 				$file_message = '';
 				$data = $this->_getData($field_data[$lc]);
-
-				if (is_array($data) && isset($data['name'])) {
-					$data['name'] = $this->getUniqueFilename($data['name'], $lc, true);
-				}
 
 				$status = parent::checkPostFieldData($data, $file_message, $entry_id);
 
@@ -370,6 +369,7 @@
 			}
 
 			$this->set('required', $original_required);
+			$this->currentLc = null;
 
 			return $error;
 		}
@@ -387,16 +387,13 @@
 			$missing_langs = array();
 
 			foreach (FLang::getLangs() as $lc) {
+				$this->currentLc = $lc;
 				if (!isset($field_data[$lc])) {
 					$missing_langs[] = $lc;
 					continue;
 				}
 
 				$data = $this->_getData($field_data[$lc]);
-
-				if (is_array($data) && isset($data['name'])) {
-					$data['name'] = $this->getUniqueFilename($data['name'], $lc, true);
-				}
 
 				// Make this language the default for now
 				// parent::processRawFieldData needs this.
@@ -428,6 +425,8 @@
 					}
 				}
 			}
+
+			$this->currentLc = null;
 
 			if (!empty($missing_langs) && $entry_id) {
 				$crt_data = $this->getCurrentData($entry_id);
@@ -589,21 +588,25 @@
 		/*  In-house  */
 		/*------------------------------------------------------------------------------------------------*/
 
-		protected function getUniqueFilename($filename, $lang_code = null, $enable = false){
-			if ($enable) {
-				if (empty($lang_code) || !is_string($lang_code)) {
-					$lang_code = FLang::getMainLang();
-				}
-
-				$crop = '150';
-				$replace = $lang_code;
-
-				if ($this->get('unique') == 'yes' ) $replace .= ".'-'.time()";
-
-				return preg_replace("/(.*)(\.[^\.]+)/e", "substr('$1', 0, $crop).'-'.$replace.'$2'", $filename);
+		protected function getUniqueFilename($filename)
+		{
+			if (empty($filename)) {
+				return $filename;
 			}
-
-			return $filename;
+			
+			if (!$this->currentLc) {
+				throw new Exception('No current language set!');
+			}
+			
+			$unique = $this->get('unique') == 'yes';
+			$lang_code = $this->currentLc;
+			
+			return preg_replace_callback('/(.*)(\.[^\.]+)/', function ($matches) use ($lang_code, $unique) {
+				if ($unique) {
+					$lang_code .= '-' . time();
+				}
+				return substr($matches[1], 0, 150) . '-' . $lang_code . $matches[2];
+			}, $filename);
 		}
 
 
@@ -612,7 +615,8 @@
 		 *
 		 * @param array $data
 		 */
-		private function _getData($data){
+		private function _getData($data)
+		{
 			if (is_string($data)) {
 				return $data;
 			}
@@ -624,7 +628,7 @@
 			if (array_key_exists('name', $data)) {
 				return $data;
 			}
-
+			
 			return array(
 				'name' => $data[0],
 				'type' => $data[1],
