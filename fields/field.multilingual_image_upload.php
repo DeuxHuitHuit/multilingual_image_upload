@@ -71,7 +71,7 @@
 			return parent::get($field);
 		}
 
-		public function findDefaults(&$settings)
+		public function findDefaults(array &$settings)
 		{
 			$settings['default_main_lang'] = 'no';
 			return parent::findDefaults($settings);
@@ -187,7 +187,7 @@
 		/*  Publish  */
 		/*------------------------------------------------------------------------------------------------*/
 
-		public function displayPublishPanel(XMLElement &$wrapper, $data = NULL, $flagWithError = NULL, $fieldnamePrefix = NULL, $fieldnamePostfix = NULL)
+		public function displayPublishPanel(XMLElement &$wrapper, $data = null, $flagWithError = null, $fieldnamePrefix = null, $fieldnamePostfix = null, $entry_id = null)
 		{
 			Extension_Frontend_Localisation::appendAssets();
 			Extension_Multilingual_Image_Upload::appendAssets();
@@ -299,7 +299,7 @@
 				$flagWithError = __('Destination folder, <code>%s</code>, is not writable. Please check permissions.', array($this->get('destination')));
 			}
 
-			if( $flagWithError != NULL ){
+			if( $flagWithError != null ){
 				$wrapper->appendChild(Widget::Error($container, $flagWithError));
 			}
 			else{
@@ -313,7 +313,7 @@
 		/*  Input  */
 		/*------------------------------------------------------------------------------------------------*/
 
-		public function checkPostFieldData($data, &$message, $entry_id = NULL)
+		public function checkPostFieldData($data, &$message, $entry_id = null)
 		{
 			$error = self::__OK__;
 			$field_data = $data;
@@ -353,7 +353,7 @@
 			return $error;
 		}
 
-		public function processRawFieldData($data, &$status, &$message = null, $simulate = false, $entry_id = NULL)
+		public function processRawFieldData($data, &$status, &$message = null, $simulate = false, $entry_id = null)
 		{
 			if (!is_array($data) || empty($data)) {
 				return parent::processRawFieldData($data, $status, $message, $simulate, $entry_id);
@@ -443,7 +443,7 @@
 		/*  Output  */
 		/*------------------------------------------------------------------------------------------------*/
 
-		public function appendFormattedElement(XMLElement &$wrapper, $data){
+		public function appendFormattedElement(XMLElement &$wrapper, $data, $encode = false, $mode = null, $entry_id = null){
 			$data = $this->localizeValues($data);
 			parent::appendFormattedElement($wrapper, $data);
 		}
@@ -544,7 +544,7 @@
 			return $data;
 		}
 
-		public function entryDataCleanup($entry_id, $data)
+		public function entryDataCleanup($entry_id, $data = null)
 		{
 			foreach (FLang::getLangs() as $lc) {
 				$file_location = WORKSPACE.'/'.ltrim($data['file-'.$lc], '/');
@@ -559,7 +559,7 @@
 			return true;
 		}
 
-		public function getParameterPoolValue($data) {
+		public function getParameterPoolValue(array $data, $entry_id = null) {
 			$lc = $this->getLang();
 			return $data["file-$lc"];
 		}
