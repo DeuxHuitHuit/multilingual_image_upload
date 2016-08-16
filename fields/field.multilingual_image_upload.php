@@ -198,7 +198,7 @@
 				WHERE
 					`field_id` = '%s';",
 				$this->handle(),
-				$this->get('default_main_lang'),
+				$this->get('default_main_lang') === 'yes' ? 'yes' :'no',
 				implode(',', $this->get('required_languages')),
 				$this->get('id')
 			));
