@@ -26,6 +26,11 @@
 		<dependency version="2.6">https://github.com/DeuxHuitHuit/frontend_localisation</dependency>
 	</dependencies>
 	<releases>
+		<release version="2.1.0" date="2016-08-16" min="2.5.0" max="2.x.x"><![CDATA[
+			* Added a convert to multilingual for image_uploads
+			* PHP7 compatibility
+			* Bug fixes
+		]]></release>
 		<release version="2.0.2" date="2016-04-15" min="2.5.0" max="2.x.x"><![CDATA[
 			* Added missing table column
 		]]></release>
