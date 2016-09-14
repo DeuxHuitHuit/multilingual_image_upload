@@ -37,7 +37,7 @@
 		{
 			$keys = array();
 			foreach (FLang::getLangs() as $lc) {
-				$keys[] = "KEY `file-{$lc}` (`file-{$lc}`),";
+				$keys[] = "KEY `file-{$lc}` (`file-{$lc}`)";
 			}
 			return $keys;
 		}
@@ -57,10 +57,10 @@
 
 			$query .= "
 					PRIMARY KEY (`id`),
-					UNIQUE KEY `entry_id` (`entry_id`)
+					UNIQUE KEY `entry_id` (`entry_id`),
 			";
 			
-			$query .= implode('', self::generateTableKeys());
+			$query .= implode(',', self::generateTableKeys());
 			
 			$query .= "
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
