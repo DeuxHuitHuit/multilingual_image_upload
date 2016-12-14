@@ -65,7 +65,7 @@
 				}
 				$keys = fieldMultilingual_image_upload::generateTableKeys();
 				foreach ($keys as $key) {
-					$query .= ' ADD ' . $key;
+					$query .= ' ADD ' . $key . ',';
 				}
 				$query = trim($query, ',') . ';';
 				Symphony::Database()->query($query);
