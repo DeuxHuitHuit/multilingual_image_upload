@@ -59,9 +59,9 @@
 					PRIMARY KEY (`id`),
 					UNIQUE KEY `entry_id` (`entry_id`),
 			";
-			
+
 			$query .= implode(',', self::generateTableKeys());
-			
+
 			$query .= "
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
 
@@ -243,7 +243,7 @@
 							$optional_langs[] = $all_langs[$lang];
 						}
 					}
-					
+
 					foreach ($optional_langs as $idx => $lang) {
 						$optional .= ' ' . __($lang);
 						if ($idx < count($optional_langs) - 2) {
@@ -275,7 +275,7 @@
 
 			$ul = new XMLElement('ul', null, array('class' => 'tabs'));
 			foreach ($langs as $lc) {
-				$li = new XMLElement('li', $all_langs[$lc], array('class' => $lc));
+				$li = new XMLElement('li', $lc, array('class' => $lc));
 				$lc === $main_lang ? $ul->prependChild($li) : $ul->appendChild($li);
 			}
 
@@ -288,18 +288,19 @@
 
 			foreach ($langs as $lc) {
 				$div = new XMLElement('div', null, array('class' => 'file tab-panel tab-'.$lc));
+				$frame = new XMLElement('div', NULL, array('class' => 'frame'));
 
 				$file = 'file-'.$lc;
 
 				if ($data[$file]) {
 					$filePath = $this->get('destination').'/'.$data[$file];
-					
-					$div->appendChild(
+
+					$frame->appendChild(
 						Widget::Anchor($filePath, URL.$filePath)
 					);
 				}
 
-				$div->appendChild(
+				$frame->appendChild(
 					Widget::Input(
 						"fields{$fieldnamePrefix}[{$this->get('element_name')}][{$lc}]{$fieldnamePostfix}",
 						$data[$file],
@@ -307,6 +308,7 @@
 					)
 				);
 
+				$div->appendChild($frame);
 				$container->appendChild($div);
 			}
 
@@ -593,14 +595,14 @@
 			if (empty($filename)) {
 				return $filename;
 			}
-			
+
 			if (!$this->currentLc) {
 				throw new Exception('No current language set!');
 			}
-			
+
 			$unique = $this->get('unique') == 'yes';
 			$lang_code = $this->currentLc;
-			
+
 			return preg_replace_callback('/(.*)(\.[^\.]+)/', function ($matches) use ($lang_code, $unique) {
 				if ($unique) {
 					$lang_code .= '-' . time();
@@ -628,7 +630,7 @@
 			if (array_key_exists('name', $data)) {
 				return $data;
 			}
-			
+
 			return array(
 				'name' => $data[0],
 				'type' => $data[1],
