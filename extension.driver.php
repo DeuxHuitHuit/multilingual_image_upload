@@ -10,7 +10,7 @@
 		const FIELD_TABLE = 'tbl_fields_multilingual_image_upload';
 
 		protected static $appendedHeaders = 0;
-		
+
 		const PUBLISH_HEADERS = 1;
 		const SETTINGS_HEADERS = 4;
 
@@ -55,7 +55,7 @@
 					self::FIELD_TABLE
 				));
 			}
-			
+
 			// Before 1.7
 			if (version_compare($previousVersion, '1.7', '<')) {
 				// get all langs
@@ -63,14 +63,14 @@
 				foreach(FLang::getLangs() as $lc) {
 					$cols .= sprintf(', `file-%1$s` = substring_index(`file-%1$s`, \'/\', -1)', $lc);
 				}
-				
+
 				// Remove directory from the upload fields, #1719
 				$upload_tables = Symphony::Database()->fetchCol("field_id", sprintf("SELECT `field_id` FROM `%s`", self::FIELD_TABLE));
 
 				if (is_array($upload_tables) && !empty($upload_tables)) {
 					foreach($upload_tables as $field) {
 						Symphony::Database()->query(sprintf(
-							"UPDATE tbl_entries_data_%d SET 
+							"UPDATE tbl_entries_data_%d SET
 								`file` = substring_index(file, '/', -1)%s",
 							$field, $cols
 						));
@@ -154,7 +154,7 @@
 			$group->appendChild(new XMLElement('legend', MIU_NAME));
 
 			$label = Widget::Label(__('Consolidate entry data'));
-			$label->appendChild(Widget::Input('settings['.MIU_GROUP.'][consolidate]', 'yes', 'checkbox', array('checked' => 'checked')));
+			$label->prependChild(Widget::Input('settings['.MIU_GROUP.'][consolidate]', 'yes', 'checkbox', array('checked' => 'checked')));
 			$group->appendChild($label);
 			$group->appendChild(new XMLElement('p', __('Check this field if you want to consolidate database by <b>keeping</b> entry values of removed/old Language Driver language codes. Entry values of current language codes will not be affected.'), array('class' => 'help')));
 
@@ -252,7 +252,7 @@
 
 		public static function appendAssets($type)
 		{
-			
+
 			if ((self::$appendedHeaders & $type) !== $type
 				&& class_exists('Administration')
 				&& Administration::instance() instanceof Administration
@@ -263,13 +263,13 @@
 				if ($type === self::PUBLISH_HEADERS) {
 					$page->addScriptToHead(URL.'/extensions/'.MIU_GROUP.'/assets/'.MIU_GROUP.'.publish.js', null, false);
 				}
-				
+
 				if ($type === self::SETTINGS_HEADERS) {
 					$page->addScriptToHead(URL.'/extensions/'.MIU_GROUP.'/assets/'.MIU_GROUP.'.settings.js', null, false);
 				}
-				
+
 				self::$appendedHeaders |= $type;
 			}
-			
+
 		}
 	}
