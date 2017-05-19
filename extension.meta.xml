@@ -22,8 +22,8 @@
 		</author>
 	</authors>
 	<dependencies>
-		<dependency version="1.6">https://github.com/DeuxHuitHuit/image_upload</dependency>
-		<dependency version="2.6">https://github.com/DeuxHuitHuit/frontend_localisation</dependency>
+		<dependency version="1.6">image_upload</dependency>
+		<dependency version="2.6">frontend_localisation</dependency>
 	</dependencies>
 	<releases>
 		<release version="3.0.0" date="TBA" min="4.0.0" max="4.x.x" php-min="5.6.x" php-max="7.x.x"><![CDATA[
