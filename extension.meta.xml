@@ -26,6 +26,9 @@
 		<dependency version="2.6">https://github.com/DeuxHuitHuit/frontend_localisation</dependency>
 	</dependencies>
 	<releases>
+		<release version="2.1.3" date="2017-06-05" min="2.5.0" max="2.x.x"><![CDATA[
+			* Make sure consolidate value does not end up in config.php
+		]]></release>
 		<release version="2.1.2" date="2016-12-14" min="2.5.0" max="2.x.x"><![CDATA[
 			* Fixed fatal error because of wrong SQL (again) when converting from a image_upload
 		]]></release>
