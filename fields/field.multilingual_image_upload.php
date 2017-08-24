@@ -25,10 +25,10 @@
 		{
 			$cols = array();
 			foreach (FLang::getLangs() as $lc) {
-				$cols[] = "`file-{$lc}` varchar(255) default NULL,";
-				$cols[] = "`size-{$lc}` int(11) unsigned NULL,";
-				$cols[] = "`mimetype-{$lc}` varchar(50) default NULL,";
-				$cols[] = "`meta-{$lc}` varchar(255) default NULL,";
+				$cols[] = "`file-{$lc}` VARCHAR(255) DEFAULT NULL,";
+				$cols[] = "`size-{$lc}` INT(11) UNSIGNED NULL,";
+				$cols[] = "`mimetype-{$lc}` VARCHAR(50) DEFAULT NULL,";
+				$cols[] = "`meta-{$lc}` VARCHAR(255) DEFAULT NULL,";
 			}
 			return $cols;
 		}
@@ -46,12 +46,12 @@
 		{
 			$query = "
 				CREATE TABLE IF NOT EXISTS `tbl_entries_data_{$this->get('id')}` (
-					`id` int(11) unsigned NOT NULL auto_increment,
-					`entry_id` int(11) unsigned NOT NULL,
-					`file` varchar(255) default NULL,
-					`size` int(11) unsigned NULL,
-					`mimetype` varchar(50) default NULL,
-					`meta` varchar(255) default NULL,";
+					`id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+					`entry_id` INT(11) UNSIGNED NOT NULL,
+					`file` VARCHAR(255) DEFAULT NULL,
+					`size` INT(11) UNSIGNED NULL,
+					`mimetype` VARCHAR(50) DEFAULT NULL,
+					`meta` VARCHAR(255) DEFAULT NULL,";
 
 			$query .= implode('', self::generateTableColumns());
 
@@ -288,7 +288,7 @@
 
 			foreach ($langs as $lc) {
 				$div = new XMLElement('div', null, array('class' => 'file tab-panel tab-'.$lc));
-				$frame = new XMLElement('div', NULL, array('class' => 'frame'));
+				$frame = new XMLElement('div', null, array('class' => 'frame'));
 
 				$file = 'file-'.$lc;
 

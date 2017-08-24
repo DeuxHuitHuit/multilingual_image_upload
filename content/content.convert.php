@@ -10,7 +10,7 @@
 	require_once(EXTENSIONS . '/multilingual_image_upload/fields/field.multilingual_image_upload.php');
 
 	class contentExtensionMultilingual_Image_UploadConvert extends JSONPage {
-		
+
 		/**
 		 *
 		 * Builds the content view
@@ -22,30 +22,30 @@
 				$this->setHttpStatus($this->_Result['status']);
 				return;
 			}
-			
+
 			if (!is_array($this->_context) || empty($this->_context)) {
 				$this->_Result['error'] = 'Parameters not found';
 				return;
 			}
-			
+
 			$id = MySQL::cleanValue($this->_context[0]);
 			$this->_Result['ok'] = true;
-			
+
 			$field = FieldManager::fetch($id);
-			
+
 			if ($field == null || !($field instanceof fieldImage_upload)) {
 				$this->_Result['error'] = "Field $id not found.";
 				$this->_Result['ok'] = false;
 				return;
 			}
-			
+
 			try {
 				// Check for languages
 				$langs = FLang::getLangs();
 				if (empty($langs)) {
 					throw new Exception('No language found. Please check that you have at least one.');
 				}
-				
+
 				$destination = MySQL::cleanValue($field->get('destination'));
 				$validator = MySQL::cleanValue($field->get('validator'));
 				$unique = MySQL::cleanValue($field->get('unique'));
@@ -54,8 +54,8 @@
 				$max_width = MySQL::cleanValue($field->get('max_width'));
 				$max_height = MySQL::cleanValue($field->get('max_height'));
 				$resize = MySQL::cleanValue($field->get('resize'));
-				$requiredLang = $field->get('required') == 'yes' ? "'main'" : 'NULL';
-				
+				$requiredLang = $field->get('required') == 'yes' ? "'main'" : 'null';
+
 				// ALTER data table SQL: add new cols
 				$entries_table = "tbl_entries_data_$id";
 				$query = "ALTER TABLE `$entries_table` ";
@@ -69,7 +69,7 @@
 				}
 				$query = trim($query, ',') . ';';
 				Symphony::Database()->query($query);
-				
+
 				// Copy values to default lang
 				$defLang = FLang::getMainLang();
 				$query = "UPDATE `$entries_table` SET ";
@@ -77,9 +77,9 @@
 					`size-$defLang` = `size`,
 					`mimetype-$defLang` = `mimetype`,
 					`meta-$defLang` = `meta`;";
-				
+
 				Symphony::Database()->query($query);
-				
+
 				// Insert into multilingual
 				Symphony::Database()->query("
 					INSERT INTO `tbl_fields_multilingual_image_upload`
@@ -93,19 +93,19 @@
 						 '$max_width', '$max_height',
 						 '$resize', $requiredLang)
 				");
-				
+
 				// remove from textbox
 				Symphony::Database()->query("
 					DELETE FROM `tbl_fields_textbox`
 						WHERE `field_id` = $id
 				");
-				
+
 				// update type
 				Symphony::Database()->query("
 					UPDATE `tbl_fields` SET `type` = 'multilingual_image_upload'
 						WHERE `id` = $id
 				");
-				
+
 			} catch (Exception $ex) {
 				$this->_Result['ok'] = false;
 				$this->_Result['error'] = $ex->getMessage();

@@ -22,18 +22,18 @@
 		{
 			return Symphony::Database()->query(sprintf(
 				"CREATE TABLE `%s` (
-					`id` INT(11) unsigned NOT NULL auto_increment,
-					`field_id` INT(11) unsigned NOT NULL,
+					`id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+					`field_id` INT(11) UNSIGNED NOT NULL,
 					`destination` VARCHAR(255) NOT NULL,
 					`validator` VARCHAR(50),
-					`unique` enum('yes','no') NOT NULL DEFAULT 'yes',
+					`unique` ENUM('yes','no') NOT NULL DEFAULT 'yes',
 					`default_main_lang` ENUM('yes', 'no') CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no',
 					`required_languages` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
-					`min_width` INT(11) unsigned,
-					`min_height` INT(11) unsigned,
-					`max_width` INT(11) unsigned,
-					`max_height` INT(11) unsigned,
-					`resize` enum('yes','no') NOT NULL DEFAULT 'yes',
+					`min_width` INT(11) UNSIGNED,
+					`min_height` INT(11) UNSIGNED,
+					`max_width` INT(11) UNSIGNED,
+					`max_height` INT(11) UNSIGNED,
+					`resize` ENUM('yes','no') NOT NULL DEFAULT 'yes',
 					PRIMARY KEY (`id`),
 					KEY `field_id` (`field_id`)
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;",
@@ -81,7 +81,7 @@
 			// Before 1.7.1
 			if (version_compare($previousVersion, '1.7.1', '<')) {
 				$query = sprintf("ALTER TABLE `%s`
-								ADD COLUMN `resize` enum('yes','no') NOT NULL DEFAULT 'yes'
+								ADD COLUMN `resize` ENUM('yes','no') NOT NULL DEFAULT 'yes'
 							", self::FIELD_TABLE);
 				try {
 					$ret = Symphony::Database()->query($query);
@@ -232,10 +232,10 @@
 						if (!in_array('file-'.$lc, $columns)) {
 							Symphony::Database()->query(sprintf(
 								'ALTER TABLE `%1$s`
-									ADD COLUMN `file-%2$s` varchar(255) default NULL,
-									ADD COLUMN `size-%2$s` int(11) unsigned NULL,
-									ADD COLUMN `mimetype-%2$s` varchar(50) default NULL,
-									ADD COLUMN `meta-%2$s` varchar(255) default NULL;',
+									ADD COLUMN `file-%2$s` VARCHAR(255) DEFAULT NULL,
+									ADD COLUMN `size-%2$s` INT(11) UNSIGNED NULL,
+									ADD COLUMN `mimetype-%2$s` VARCHAR(50) DEFAULT NULL,
+									ADD COLUMN `meta-%2$s` VARCHAR(255) DEFAULT NULL;',
 								$entries_table, $lc
 							));
 						}
