@@ -25,10 +25,22 @@
 		{
 			$cols = array();
 			foreach (FLang::getLangs() as $lc) {
-				$cols[] = "`file-{$lc}` VARCHAR(255) DEFAULT NULL,";
-				$cols[] = "`size-{$lc}` INT(11) UNSIGNED NULL,";
-				$cols[] = "`mimetype-{$lc}` VARCHAR(50) DEFAULT NULL,";
-				$cols[] = "`meta-{$lc}` VARCHAR(255) DEFAULT NULL,";
+				$cols['file-' . $lc] = [
+					'type' => 'varchar(255)',
+					'null' => true,
+				];
+				$cols['size-' . $lc] = [
+					'type' => 'int(11)',
+					'null' => true,
+				];
+				$cols['mimetype-' . $lc] = [
+					'type' => 'varchar(50)',
+					'null' => true,
+				];
+				$cols['meta-' . $lc] = [
+					'type' => 'varchar(255)',
+					'null' => true,
+				];
 			}
 			return $cols;
 		}
@@ -37,35 +49,47 @@
 		{
 			$keys = array();
 			foreach (FLang::getLangs() as $lc) {
-				$keys[] = "KEY `file-{$lc}` (`file-{$lc}`)";
+				$keys['file-' . $lc] = 'key';
 			}
 			return $keys;
 		}
 
 		public function createTable()
 		{
-			$query = "
-				CREATE TABLE IF NOT EXISTS `tbl_entries_data_{$this->get('id')}` (
-					`id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-					`entry_id` INT(11) UNSIGNED NOT NULL,
-					`file` VARCHAR(255) DEFAULT NULL,
-					`size` INT(11) UNSIGNED NULL,
-					`mimetype` VARCHAR(50) DEFAULT NULL,
-					`meta` VARCHAR(255) DEFAULT NULL,";
-
-			$query .= implode('', self::generateTableColumns());
-
-			$query .= "
-					PRIMARY KEY (`id`),
-					UNIQUE KEY `entry_id` (`entry_id`),
-			";
-
-			$query .= implode(',', self::generateTableKeys());
-
-			$query .= "
-				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
-
-			return Symphony::Database()->query($query);
+			return Symphony::Database()
+				->create('tbl_entries_data_' . $this->get('id'))
+				->ifNotExists()
+				->charset('utf8')
+				->collate('utf8_unicode_ci')
+				->fields(array_merge([
+					'id' => [
+						'type' => 'int(11)',
+						'auto' => true,
+					],
+					'entry_id' => 'int(11)',
+					'file' => [
+						'type' => 'varchar(255)',
+						'null' => true,
+					],
+					'size' => [
+						'type' => 'int(11)',
+						'null' => true,
+					],
+					'mimetype' => [
+						'type' => 'varchar(50)',
+						'null' => true,
+					],
+					'meta' => [
+						'type' => 'varchar(255)',
+						'null' => true,
+					],
+				], self::generateTableColumns()))
+				->keys(array_merge([
+					'id' => 'primary',
+					'entry_id' => 'unique',
+				], self::generateTableKeys()))
+				->execute()
+				->success();
 		}
 
 
@@ -189,19 +213,15 @@
 				return false;
 			}
 
-			return Symphony::Database()->query(sprintf("
-				UPDATE
-					`tbl_fields_%s`
-				SET
-					`default_main_lang` = '%s',
-					`required_languages` = '%s'
-				WHERE
-					`field_id` = '%s';",
-				$this->handle(),
-				$this->get('default_main_lang') === 'yes' ? 'yes' :'no',
-				implode(',', $this->get('required_languages')),
-				$this->get('id')
-			));
+			return Symphony::Database()
+				->update('tbl_fields_' . $this->handle())
+				->set([
+					'default_main_lang' => $this->get('default_main_lang') === 'yes' ? 'yes' :'no',
+					'required_languages' => implode(',', $this->get('required_languages')),
+				])
+				->where(['field_id' => $this->get('id')])
+				->execute()
+				->success();
 		}
 
 
@@ -400,17 +420,17 @@
 				// Make this language the default for now
 				// parent::processRawFieldData needs this.
 				if ($entry_id) {
-					Symphony::Database()->query(sprintf(
-						"UPDATE `tbl_entries_data_%d`
-							SET
-							`file` = `file-$lc`,
-							`mimetype` = `mimetype-$lc`,
-							`size` = `size-$lc`,
-							`meta` = `meta-$lc`
-							WHERE `entry_id` = %d",
-						$this->get('id'),
-						$entry_id
-					));
+					Symphony::Database()
+						->update('tbl_entries_data_' . $this->get('id'))
+						->set([
+							'file' => 'file-' . $lc,
+							'mimetype' => 'mimetype-' . $lc,
+							'size' => 'size-' . $lc,
+							'meta' => 'meta-' . $lc,
+						])
+						->where(['entry_id' => $entry_id])
+						->execute()
+						->success();
 				}
 
 				$local_status = self::__OK__;
@@ -451,14 +471,12 @@
 		}
 
 		protected function getCurrentData($entry_id) {
-			$query = sprintf(
-				'SELECT * FROM `tbl_entries_data_%d`
-				WHERE `entry_id` = %d',
-				$this->get('id'),
-				$entry_id
-			);
-
-			return Symphony::Database()->fetchRow(0, $query);
+			return Symphony::Database()
+				->select(['*'])
+				->from('tbl_entries_data_' . $this->get('id'))
+				->where(['entry_id' => $entry_id])
+				->execute()
+				->rows();
 		}
 
 		/*------------------------------------------------------------------------------------------------*/
