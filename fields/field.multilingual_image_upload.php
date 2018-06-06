@@ -5,6 +5,7 @@
 	require_once(EXTENSIONS.'/image_upload/fields/field.image_upload.php');
 	require_once(EXTENSIONS.'/frontend_localisation/extension.driver.php');
 	require_once(EXTENSIONS.'/frontend_localisation/lib/class.FLang.php');
+	require_once(EXTENSIONS.'/multilingual_image_upload/lib/class.entryquerymultilingualimageuploadadapter.php');
 
 	final class fieldMultilingual_image_upload extends fieldImage_upload
 	{
@@ -17,6 +18,7 @@
 
 		public function __construct(){
 			parent::__construct();
+			$this->entryQueryFieldAdapter = new EntryQueryMultilingualImageUploadAdapter($this);
 
 			$this->_name = __('Multilingual Image Upload');
 		}
