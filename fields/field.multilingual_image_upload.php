@@ -310,7 +310,7 @@
 
 			foreach ($langs as $lc) {
 				$div = new XMLElement('div', null, array('class' => 'file tab-panel tab-'.$lc));
-				$frame = new XMLElement('div', null, array('class' => 'frame'));
+				$frame = new XMLElement('span', null, array('class' => 'frame'));
 
 				$file = 'file-'.$lc;
 
@@ -425,10 +425,10 @@
 					Symphony::Database()
 						->update('tbl_entries_data_' . $this->get('id'))
 						->set([
-							'file' => 'file-' . $lc,
-							'mimetype' => 'mimetype-' . $lc,
-							'size' => 'size-' . $lc,
-							'meta' => 'meta-' . $lc,
+							'file' => '$file-' . $lc,
+							'mimetype' => '$mimetype-' . $lc,
+							'size' => '$size-' . $lc,
+							'meta' => '$meta-' . $lc,
 						])
 						->where(['entry_id' => $entry_id])
 						->execute()
