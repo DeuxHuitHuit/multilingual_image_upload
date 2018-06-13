@@ -340,6 +340,11 @@
 				$page = Administration::instance()->Page;
 
 
+				if ($type === self::PUBLISH_HEADERS) {
+					$page->addScriptToHead(URL.'/extensions/'.MIU_GROUP.'/assets/'.MIU_GROUP.'.publish.js', null, false);
+				}
+
+
 				if ($type === self::SETTINGS_HEADERS) {
 					$page->addScriptToHead(URL.'/extensions/'.MIU_GROUP.'/assets/'.MIU_GROUP.'.settings.js', null, false);
 				}
