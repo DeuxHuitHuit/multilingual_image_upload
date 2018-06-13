@@ -4,8 +4,6 @@
 		$('div.field-multilingual_image_upload .file').each(function () {
 			var t = $(this);
 
-			console.log('Test');
-
 			if (t.find('a').length) {
 				$('<em>' + Symphony.Language.get('Remove File') + '</em>').appendTo($('.frame', t)).click(function (event) {
 					event.preventDefault();
