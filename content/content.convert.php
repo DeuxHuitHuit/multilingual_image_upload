@@ -31,7 +31,11 @@
 			$id = $this->_context[0];
 			$this->_Result['ok'] = true;
 
-			$field = (new FieldManager)->select()->field($id)->execute()->next();
+			$field = (new FieldManager)
+				->select()
+				->field($id)
+				->execute()
+				->next();
 
 			if ($field == null || !($field instanceof fieldImage_upload)) {
 				$this->_Result['error'] = "Field $id not found.";
