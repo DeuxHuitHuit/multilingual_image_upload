@@ -5,6 +5,7 @@
 	require_once(EXTENSIONS.'/image_upload/fields/field.image_upload.php');
 	require_once(EXTENSIONS.'/frontend_localisation/extension.driver.php');
 	require_once(EXTENSIONS.'/frontend_localisation/lib/class.FLang.php');
+	require_once(EXTENSIONS.'/multilingual_image_upload/lib/class.entryquerymultilingualimageuploadadapter.php');
 
 	final class fieldMultilingual_image_upload extends fieldImage_upload
 	{
@@ -17,6 +18,7 @@
 
 		public function __construct(){
 			parent::__construct();
+			$this->entryQueryFieldAdapter = new EntryQueryMultilingualImageUploadAdapter($this);
 
 			$this->_name = __('Multilingual Image Upload');
 		}
@@ -25,10 +27,22 @@
 		{
 			$cols = array();
 			foreach (FLang::getLangs() as $lc) {
-				$cols[] = "`file-{$lc}` varchar(255) default NULL,";
-				$cols[] = "`size-{$lc}` int(11) unsigned NULL,";
-				$cols[] = "`mimetype-{$lc}` varchar(50) default NULL,";
-				$cols[] = "`meta-{$lc}` varchar(255) default NULL,";
+				$cols['file-' . $lc] = [
+					'type' => 'varchar(255)',
+					'null' => true,
+				];
+				$cols['size-' . $lc] = [
+					'type' => 'int(11)',
+					'null' => true,
+				];
+				$cols['mimetype-' . $lc] = [
+					'type' => 'varchar(50)',
+					'null' => true,
+				];
+				$cols['meta-' . $lc] = [
+					'type' => 'varchar(255)',
+					'null' => true,
+				];
 			}
 			return $cols;
 		}
@@ -37,35 +51,45 @@
 		{
 			$keys = array();
 			foreach (FLang::getLangs() as $lc) {
-				$keys[] = "KEY `file-{$lc}` (`file-{$lc}`)";
+				$keys['file-' . $lc] = 'key';
 			}
 			return $keys;
 		}
 
 		public function createTable()
 		{
-			$query = "
-				CREATE TABLE IF NOT EXISTS `tbl_entries_data_{$this->get('id')}` (
-					`id` int(11) unsigned NOT NULL auto_increment,
-					`entry_id` int(11) unsigned NOT NULL,
-					`file` varchar(255) default NULL,
-					`size` int(11) unsigned NULL,
-					`mimetype` varchar(50) default NULL,
-					`meta` varchar(255) default NULL,";
-
-			$query .= implode('', self::generateTableColumns());
-
-			$query .= "
-					PRIMARY KEY (`id`),
-					UNIQUE KEY `entry_id` (`entry_id`),
-			";
-			
-			$query .= implode(',', self::generateTableKeys());
-			
-			$query .= "
-				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
-
-			return Symphony::Database()->query($query);
+			return Symphony::Database()
+				->create('tbl_entries_data_' . $this->get('id'))
+				->ifNotExists()
+				->fields(array_merge([
+					'id' => [
+						'type' => 'int(11)',
+						'auto' => true,
+					],
+					'entry_id' => 'int(11)',
+					'file' => [
+						'type' => 'varchar(255)',
+						'null' => true,
+					],
+					'size' => [
+						'type' => 'int(11)',
+						'null' => true,
+					],
+					'mimetype' => [
+						'type' => 'varchar(50)',
+						'null' => true,
+					],
+					'meta' => [
+						'type' => 'varchar(255)',
+						'null' => true,
+					],
+				], self::generateTableColumns()))
+				->keys(array_merge([
+					'id' => 'primary',
+					'entry_id' => 'unique',
+				], self::generateTableKeys()))
+				->execute()
+				->success();
 		}
 
 
@@ -189,19 +213,15 @@
 				return false;
 			}
 
-			return Symphony::Database()->query(sprintf("
-				UPDATE
-					`tbl_fields_%s`
-				SET
-					`default_main_lang` = '%s',
-					`required_languages` = '%s'
-				WHERE
-					`field_id` = '%s';",
-				$this->handle(),
-				$this->get('default_main_lang') === 'yes' ? 'yes' :'no',
-				implode(',', $this->get('required_languages')),
-				$this->get('id')
-			));
+			return Symphony::Database()
+				->update('tbl_fields_' . $this->handle())
+				->set([
+					'default_main_lang' => $this->get('default_main_lang') === 'yes' ? 'yes' :'no',
+					'required_languages' => implode(',', $this->get('required_languages')),
+				])
+				->where(['field_id' => $this->get('id')])
+				->execute()
+				->success();
 		}
 
 
@@ -243,7 +263,7 @@
 							$optional_langs[] = $all_langs[$lang];
 						}
 					}
-					
+
 					foreach ($optional_langs as $idx => $lang) {
 						$optional .= ' ' . __($lang);
 						if ($idx < count($optional_langs) - 2) {
@@ -275,7 +295,7 @@
 
 			$ul = new XMLElement('ul', null, array('class' => 'tabs'));
 			foreach ($langs as $lc) {
-				$li = new XMLElement('li', $all_langs[$lc], array('class' => $lc));
+				$li = new XMLElement('li', $lc, array('class' => $lc));
 				$lc === $main_lang ? $ul->prependChild($li) : $ul->appendChild($li);
 			}
 
@@ -288,18 +308,19 @@
 
 			foreach ($langs as $lc) {
 				$div = new XMLElement('div', null, array('class' => 'file tab-panel tab-'.$lc));
+				$frame = new XMLElement('span', null, array('class' => 'frame'));
 
 				$file = 'file-'.$lc;
 
 				if ($data[$file]) {
 					$filePath = $this->get('destination').'/'.$data[$file];
-					
-					$div->appendChild(
+
+					$frame->appendChild(
 						Widget::Anchor($filePath, URL.$filePath)
 					);
 				}
 
-				$div->appendChild(
+				$frame->appendChild(
 					Widget::Input(
 						"fields{$fieldnamePrefix}[{$this->get('element_name')}][{$lc}]{$fieldnamePostfix}",
 						$data[$file],
@@ -307,6 +328,7 @@
 					)
 				);
 
+				$div->appendChild($frame);
 				$container->appendChild($div);
 			}
 
@@ -398,17 +420,17 @@
 				// Make this language the default for now
 				// parent::processRawFieldData needs this.
 				if ($entry_id) {
-					Symphony::Database()->query(sprintf(
-						"UPDATE `tbl_entries_data_%d`
-							SET
-							`file` = `file-$lc`,
-							`mimetype` = `mimetype-$lc`,
-							`size` = `size-$lc`,
-							`meta` = `meta-$lc`
-							WHERE `entry_id` = %d",
-						$this->get('id'),
-						$entry_id
-					));
+					Symphony::Database()
+						->update('tbl_entries_data_' . $this->get('id'))
+						->set([
+							'file' => '$file-' . $lc,
+							'mimetype' => '$mimetype-' . $lc,
+							'size' => '$size-' . $lc,
+							'meta' => '$meta-' . $lc,
+						])
+						->where(['entry_id' => $entry_id])
+						->execute()
+						->success();
 				}
 
 				$local_status = self::__OK__;
@@ -449,14 +471,12 @@
 		}
 
 		protected function getCurrentData($entry_id) {
-			$query = sprintf(
-				'SELECT * FROM `tbl_entries_data_%d`
-				WHERE `entry_id` = %d',
-				$this->get('id'),
-				$entry_id
-			);
-
-			return Symphony::Database()->fetchRow(0, $query);
+			return Symphony::Database()
+				->select(['*'])
+				->from('tbl_entries_data_' . $this->get('id'))
+				->where(['entry_id' => $entry_id])
+				->execute()
+				->next();
 		}
 
 		/*------------------------------------------------------------------------------------------------*/
@@ -593,14 +613,14 @@
 			if (empty($filename)) {
 				return $filename;
 			}
-			
+
 			if (!$this->currentLc) {
 				throw new Exception('No current language set!');
 			}
-			
+
 			$unique = $this->get('unique') == 'yes';
 			$lang_code = $this->currentLc;
-			
+
 			return preg_replace_callback('/(.*)(\.[^\.]+)/', function ($matches) use ($lang_code, $unique) {
 				if ($unique) {
 					$lang_code .= '-' . time();
@@ -628,7 +648,7 @@
 			if (array_key_exists('name', $data)) {
 				return $data;
 			}
-			
+
 			return array(
 				'name' => $data[0],
 				'type' => $data[1],

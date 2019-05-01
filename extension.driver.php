@@ -2,15 +2,15 @@
 
 	if(!defined('__IN_SYMPHONY__')) die('<h2>Symphony Error</h2><p>You cannot directly access this file</p>');
 
-	define_safe(MIU_NAME, 'Multilingual Image Upload');
-	define_safe(MIU_GROUP, 'multilingual_image_upload');
+	define_safe('MIU_NAME', 'Multilingual Image Upload');
+	define_safe('MIU_GROUP', 'multilingual_image_upload');
 
 	class Extension_Multilingual_Image_Upload extends Extension
 	{
 		const FIELD_TABLE = 'tbl_fields_multilingual_image_upload';
 
 		protected static $appendedHeaders = 0;
-		
+
 		const PUBLISH_HEADERS = 1;
 		const SETTINGS_HEADERS = 4;
 
@@ -20,71 +20,116 @@
 
 		public function install()
 		{
-			return Symphony::Database()->query(sprintf(
-				"CREATE TABLE `%s` (
-					`id` INT(11) unsigned NOT NULL auto_increment,
-					`field_id` INT(11) unsigned NOT NULL,
-					`destination` VARCHAR(255) NOT NULL,
-					`validator` VARCHAR(50),
-					`unique` enum('yes','no') NOT NULL DEFAULT 'yes',
-					`default_main_lang` ENUM('yes', 'no') CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no',
-					`required_languages` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
-					`min_width` INT(11) unsigned,
-					`min_height` INT(11) unsigned,
-					`max_width` INT(11) unsigned,
-					`max_height` INT(11) unsigned,
-					`resize` enum('yes','no') NOT NULL DEFAULT 'yes',
-					PRIMARY KEY (`id`),
-					KEY `field_id` (`field_id`)
-				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;",
-				self::FIELD_TABLE
-			));
+			return Symphony::Database()
+				->create(self::FIELD_TABLE)
+				->ifNotExists()
+				->fields([
+					'id' => [
+						'type' => 'int(11)',
+						'auto' => true,
+					],
+					'field_id' => 'int(11)',
+					'destination' => 'varchar(255)',
+					'validator' => 'varchar(50)',
+					'unique' => [
+						'type' => 'enum',
+						'values' => ['yes','no'],
+						'default' => 'yes',
+					],
+					'default_main_lang' => [
+						'type' => 'enum',
+						'values' => ['yes','no'],
+						'default' => 'no',
+					],
+					'required_languages' => [
+						'type' => 'varchar(255)',
+						'null' => true,
+					],
+					'min_width' => 'int(11)',
+					'min_height' => 'int(11)',
+					'max_width' => 'int(11)',
+					'max_height' => 'int(11)',
+					'resize' => [
+						'type' => 'enum',
+						'values' => ['yes','no'],
+						'default' => 'yes',
+					],
+				])
+				->keys([
+					'id' => 'primary',
+					'field_id' => 'key',
+				])
+				->execute()
+				->success();
 		}
 
 		public function update($previousVersion = false)
 		{
 			// Before 1.3
 			if (version_compare($previousVersion, '1.3', '<')) {
-				Symphony::Database()->query(sprintf(
-					"ALTER TABLE `%s` ADD COLUMN `def_ref_lang` ENUM('yes','no') DEFAULT 'no'",
-					self::FIELD_TABLE
-				));
+				Symphony::Database()
+					->alter(self::FIELD_TABLE)
+					->add([
+						'def_ref_lang' => [
+							'type' => 'enum',
+							'values' => ['yes','no'],
+							'default' => 'no',
+						],
+					])
+					->execute()
+					->success();
 
-				Symphony::Database()->query(sprintf(
-					"UPDATE `%s` SET `def_ref_lang` = 'no'",
-					self::FIELD_TABLE
-				));
+				Symphony::Database()
+					->update(self::FIELD_TABLE)
+					->set([
+						'def_ref_lang' => 'no',
+					])
+					->execute()
+					->success();
 			}
-			
+
 			// Before 1.7
 			if (version_compare($previousVersion, '1.7', '<')) {
 				// get all langs
-				$cols = '';
+				$cols = array();
 				foreach(FLang::getLangs() as $lc) {
-					$cols .= sprintf(', `file-%1$s` = substring_index(`file-%1$s`, \'/\', -1)', $lc);
+					$cols['file-' . $lc] = substring_index('file-' . $lc, '/', -1);
 				}
-				
+
 				// Remove directory from the upload fields, #1719
-				$upload_tables = Symphony::Database()->fetchCol("field_id", sprintf("SELECT `field_id` FROM `%s`", self::FIELD_TABLE));
+				$upload_tables = Symphony::Database()
+					->select('field_id')
+					->from(self::FIELD_TABLE)
+					->execute()
+					->column('field_id');
 
 				if (is_array($upload_tables) && !empty($upload_tables)) {
 					foreach($upload_tables as $field) {
-						Symphony::Database()->query(sprintf(
-							"UPDATE tbl_entries_data_%d SET 
-								`file` = substring_index(file, '/', -1)%s",
-							$field, $cols
-						));
+						Symphony::Database()
+							->update('tbl_entries_data_' . $field)
+							->set(array_merge([
+								'file' => substring_index('file', '/', -1)
+							], $cols))
+							->execute()
+							->success();
 					}
 				}
 			}
 
 			// Before 1.7.1
 			if (version_compare($previousVersion, '1.7.1', '<')) {
-				$query = sprintf("ALTER TABLE `%s`
-								ADD COLUMN `resize` enum('yes','no') NOT NULL DEFAULT 'yes'
-							", self::FIELD_TABLE);
 				try {
-					$ret = Symphony::Database()->query($query);
+					Symphony::Database()
+						->alter(self::FIELD_TABLE)
+						->add([
+							'resize' => [
+								'type' => 'enum',
+								'values' => ['yes','no'],
+								'default' => 'yes',
+							],
+						])
+						->execute()
+						->success();
 				}
 				catch (Exception $e) {
 					// ignore
@@ -92,12 +137,23 @@
 			}
 
 			if (version_compare($previousVersion, '2.0.0', '<')) {
-				Symphony::Database()->query(sprintf(
-					"ALTER TABLE `%s`
-						CHANGE COLUMN `def_ref_lang` `default_main_lang` ENUM('yes', 'no') CHARACTER SET utf8 COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no',
-						ADD `required_languages` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL;",
-					self::FIELD_TABLE
-				));
+				Symphony::Database()
+					->alter(self::FIELD_TABLE)
+					->change(['def_ref_lang' => [
+						'default_main_lang' => [
+							'type' => 'enum',
+							'values' => ['yes', 'no'],
+							'default' => 'no',
+						],
+					]])
+					->add([
+						'required_languages' => [
+							'type' => 'varchar(255)',
+							'null' => true,
+						],
+					])
+					->execute()
+					->success();
 			}
 
 			return true;
@@ -105,10 +161,11 @@
 
 		public function uninstall()
 		{
-			return Symphony::Database()->query(sprintf(
-				"DROP TABLE IF EXISTS `%s`",
-				self::FIELD_TABLE
-			));
+			return Symphony::Database()
+				->drop(self::FIELD_TABLE)
+				->ifExists()
+				->execute()
+				->success();
 		}
 
 
@@ -154,7 +211,7 @@
 			$group->appendChild(new XMLElement('legend', MIU_NAME));
 
 			$label = Widget::Label(__('Consolidate entry data'));
-			$label->appendChild(Widget::Input('settings['.MIU_GROUP.'][consolidate]', 'yes', 'checkbox', array('checked' => 'checked')));
+			$label->prependChild(Widget::Input('settings['.MIU_GROUP.'][consolidate]', 'yes', 'checkbox', array('checked' => 'checked')));
 			$group->appendChild($label);
 			$group->appendChild(new XMLElement('p', __('Check this field if you want to consolidate database by <b>keeping</b> entry values of removed/old Language Driver language codes. Entry values of current language codes will not be affected.'), array('class' => 'help')));
 
@@ -191,17 +248,21 @@
 					$entries_table = 'tbl_entries_data_'.$field["field_id"];
 
 					try{
-						$show_columns = Symphony::Database()->fetch(sprintf(
-							"SHOW COLUMNS FROM `%s` LIKE 'file-%%'",
-							$entries_table
-						));
+						$show_columns = Symphony::Database()
+							->showColumns()
+							->from($entries_table)
+							->like('file-%%')
+							->execute()
+							->rows();
 					}
 					catch( DatabaseException $dbe) {
 						// Field doesn't exist. Better remove it's settings
-						Symphony::Database()->query(sprintf(
-							"DELETE FROM `%s` WHERE `field_id` = '%s';",
-							self::FIELD_TABLE, $field["field_id"]
-						));
+						Symphony::Database()
+							->delete(self::FIELD_TABLE)
+							->where(['field_id' => $field['field_id']])
+							->execute()
+							->success();
+
 						continue;
 					}
 
@@ -215,14 +276,16 @@
 
 							// If not consolidate option AND column lang_code not in supported languages codes -> Drop Column
 							if (($consolidate !== 'yes') && !in_array($lc, $context['new_langs']))
-								Symphony::Database()->query(sprintf(
-									'ALTER TABLE `%1$s`
-										DROP COLUMN `file-%2$s`,
-										DROP COLUMN `size-%2$s`,
-										DROP COLUMN `mimetype-%2$s`,
-										DROP COLUMN `meta-%2$s`;',
-									$entries_table, $lc
-								));
+								Symphony::Database()
+									->alter($entries_table)
+									->drop([
+										'file-' . $lc,
+										'size-' . $lc,
+										'mimetype-' . $lc,
+										'meta-' . $lc,
+									])
+									->execute()
+									->success();
 							else
 								$columns[] = $column['Field'];
 						}
@@ -230,14 +293,28 @@
 					// Add new fields
 					foreach ($context['new_langs'] as $lc) {
 						if (!in_array('file-'.$lc, $columns)) {
-							Symphony::Database()->query(sprintf(
-								'ALTER TABLE `%1$s`
-									ADD COLUMN `file-%2$s` varchar(255) default NULL,
-									ADD COLUMN `size-%2$s` int(11) unsigned NULL,
-									ADD COLUMN `mimetype-%2$s` varchar(50) default NULL,
-									ADD COLUMN `meta-%2$s` varchar(255) default NULL;',
-								$entries_table, $lc
-							));
+							Symphony::Database()
+								->alter($entries_table)
+								->add([
+									'file-' . $lc => [
+										'type' => 'varchar(255)',
+										'null' => true,
+									],
+									'size-' . $lc => [
+										'type' => 'int(11)',
+										'null' => true,
+									],
+									'mimetype-' . $lc => [
+										'type' => 'varchar(50)',
+										'null' => true,
+									],
+									'meta-' . $lc => [
+										'type' => 'varchar(255)',
+										'null' => true,
+									],
+								])
+								->execute()
+								->success();
 						}
 					}
 				}
@@ -252,7 +329,7 @@
 
 		public static function appendAssets($type)
 		{
-			
+
 			if ((self::$appendedHeaders & $type) !== $type
 				&& class_exists('Administration')
 				&& Administration::instance() instanceof Administration
@@ -260,16 +337,18 @@
 
 				$page = Administration::instance()->Page;
 
+
 				if ($type === self::PUBLISH_HEADERS) {
 					$page->addScriptToHead(URL.'/extensions/'.MIU_GROUP.'/assets/'.MIU_GROUP.'.publish.js', null, false);
 				}
-				
+
+
 				if ($type === self::SETTINGS_HEADERS) {
 					$page->addScriptToHead(URL.'/extensions/'.MIU_GROUP.'/assets/'.MIU_GROUP.'.settings.js', null, false);
 				}
-				
+
 				self::$appendedHeaders |= $type;
 			}
-			
+
 		}
 	}
