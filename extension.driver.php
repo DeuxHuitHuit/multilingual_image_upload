@@ -2,8 +2,8 @@
 
 	if(!defined('__IN_SYMPHONY__')) die('<h2>Symphony Error</h2><p>You cannot directly access this file</p>');
 
-	define_safe(MIU_NAME, 'Multilingual Image Upload');
-	define_safe(MIU_GROUP, 'multilingual_image_upload');
+	define_safe('MIU_NAME', 'Multilingual Image Upload');
+	define_safe('MIU_GROUP', 'multilingual_image_upload');
 
 	class Extension_Multilingual_Image_Upload extends Extension
 	{
